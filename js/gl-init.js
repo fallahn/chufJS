@@ -4,7 +4,8 @@
 
 var glContext;
 var shaderManager = new ShaderManager();
-var globeMesh;
+var textureManager = new TextureManager();
+var globeMesh; //replace with scene graph
 var pMatrix = mat4.create(); //move to camera class
 
 function startGL()
@@ -13,7 +14,7 @@ function startGL()
 	initGL(canvas);
 	loadScene();
 
-	drawScene();
+	tick();
 }
 
 function initGL(canvas)
@@ -35,8 +36,9 @@ function initGL(canvas)
 
 function loadScene()
 {
-	globeMesh = new Sphere(2.5, glContext);
-	globeMesh.shaderProgram = shaderManager.getShaderProgram(glContext, "phong");
+	globeMesh = new Sphere(glContext, 2.5);
+	globeMesh.setShader(shaderManager.getShaderProgram(glContext, "phong"));
+	globeMesh.setTexture("colour", textureManager.getTexture(glContext, "img/earth_map/earth_colour.png"));
 	globeMesh.setPosition(0.0, 0.0, -7.0);
 }
 
@@ -47,4 +49,28 @@ function drawScene()
 
 	mat4.perspective(45, glContext.viewportWidth / glContext.viewportHeight, 0.1, 100.0, pMatrix);	
 	globeMesh.draw(glContext, pMatrix);
+}
+
+window.requestAnimFrame =
+ (
+	function() 
+	{
+ 		return window.requestAnimationFrame ||
+         window.webkitRequestAnimationFrame ||
+         window.mozRequestAnimationFrame ||
+         window.oRequestAnimationFrame ||
+         window.msRequestAnimationFrame ||
+         function(callback, element)
+         {
+           window.setTimeout(callback, 1000/60);
+   		 };
+	}
+)();
+
+function tick() //TODO figure out how timing works
+{
+	requestAnimationFrame(tick);
+	//updateScene();
+	globeMesh.rotate(0, 0.001, 0);
+	drawScene();
 }

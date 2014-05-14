@@ -1,14 +1,19 @@
 ///////////////////////////////////////////
 // webGL shaders 
 ///////////////////////////////////////////
-function ShaderProgram()
+function ShaderProgram(name)
 {
-	this.name               = null;
+	this.name               = name;
 	this.program            = null;
-	this.pMatrixLocation    = null;
-	this.mvMatrixLocation   = null;
+
+	this.pMatrixUniform     = null;
+	this.mvMatrixUniform    = null;
+	this.colourMapUniform   = null;
+	this.normalMapUniform   = null;
+	this.specularMapUniform = null;
+
 	this.vertexPosAttribute = null;
-	//UV coords etc
+	this.texCoordAttribute  = null;
 }
 
 function ShaderManager()
@@ -20,7 +25,7 @@ function ShaderManager()
 		//check if shader exists
 		for(i = 0; i < shaders.length; ++i)
 		{
-			if(shaders[i].name == name)
+			if(shaders[i].name === name)
 			{
 				return shaders[i];
 			}
@@ -29,7 +34,7 @@ function ShaderManager()
 		//create it if it doesn't
 		var fragShader;
 		var vertShader;
-		var newShader = new ShaderProgram();
+		var newShader = new ShaderProgram(name);
 
 		switch (name)
 		{
@@ -37,11 +42,13 @@ function ShaderManager()
 			fragShader = getShader(glContext, phongFrag, "frag");
 			vertShader = getShader(glContext, phongVert, "vert");
 		break;
+		case "normal":
+			//TODO load normal map shader and set shader program unform locations
+		break;
 
 		default: return null;
 		}
 		
-		newShader.name = name;
 		newShader.program = glContext.createProgram();
 		glContext.attachShader(newShader.program, vertShader);
 		glContext.attachShader(newShader.program, fragShader);
@@ -52,9 +59,12 @@ function ShaderManager()
 
 		newShader.vertexPosAttribute = glContext.getAttribLocation(newShader.program, "vertPos");
 		glContext.enableVertexAttribArray(newShader.vertexPosAttribute);
+		newShader.texCoordAttribute = glContext.getAttribLocation(newShader.program, "texCoord");
+		glContext.enableVertexAttribArray(newShader.texCoordAttribute);
 
-		newShader.pMatrixLocation = glContext.getUniformLocation(newShader.program, "pMat");
-		newShader.mvMatrixLocation = glContext.getUniformLocation(newShader.program, "mvMat");
+		newShader.pMatrixUniform = glContext.getUniformLocation(newShader.program, "pMat");
+		newShader.mvMatrixUniform = glContext.getUniformLocation(newShader.program, "mvMat");
+		newShader.colourMapUniform = glContext.getUniformLocation(newShader.program, "colourMap");
 
 		shaders.push(newShader);
 		return newShader;
@@ -92,19 +102,26 @@ function ShaderManager()
 
 var phongFrag = [//TODO make this actually a phong shader
 "	precision mediump float;",
+"	varying vec2 vTexCoord;",
+
+"	uniform sampler2D colourMap;",
 
 "	void main(void)",
 "	{",
-"		gl_FragColor = vec4(0.0, 0.5, 1.0, 1.0);",
+"		gl_FragColor = texture2D(colourMap, vTexCoord.xy);",
 "	}"].join("\n");
 
 var phongVert = [//TODO make this actually a phong shader
 "	attribute vec3 vertPos;",
+"	attribute vec2 texCoord;",
 
 "	uniform mat4 mvMat;",
 "	uniform mat4 pMat;",
 
+"	varying vec2 vTexCoord;",
+
 "	void main(void)",
 "	{",
 "		gl_Position = pMat * mvMat * vec4(vertPos, 1.0);",
+"		vTexCoord = texCoord;",
 "	}"].join("\n");
