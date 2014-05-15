@@ -38,6 +38,10 @@ function Mesh()
 
 		glContext.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, matrices.mvMatrix);
 		glContext.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, matrices.pMatrix);
+		var nMatrix = mat3.create();
+		mat4.toInverseMat3(matrices.mvMatrix, nMatrix);
+		mat3.transpose(nMatrix);
+		glContext.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, nMatrix);
 
 		//bind shader attrib buffers - TODO check which need to be bound for current shader
 		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.positionBuffer);
@@ -45,6 +49,12 @@ function Mesh()
 		
 		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.uvBuffer);
 		glContext.vertexAttribPointer(shaderProgram.texCoordAttribute, this.uvBuffer.itemSize, glContext.FLOAT, false, 0, 0);
+
+		if(this.normalBuffer)
+		{
+			glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
+			glContext.vertexAttribPointer(shaderProgram.vertexNormalAttribute, this.normalBuffer.itemSize, glContext.FLOAT, false, 0, 0);
+		}
 
 		//check for textures and bind loaded
 		if(colourTexture)
@@ -190,8 +200,46 @@ function Cube(glContext, length)
 	this.positionBuffer.itemSize = 3;
 	this.positionBuffer.itemCount = verts.length / 3;
 
-	//TODO normal data
+	//normal data
+	this.normalBuffer = glContext.createBuffer();
+	glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
+	var normalData = [
+		//f0
+		 0.0,  0.0,  1.0,
+		 0.0,  0.0,  1.0,
+		 0.0,  0.0,  1.0,
+		 0.0,  0.0,  1.0,
+		//f1
+		 0.0,  0.0, -1.0,
+		 0.0,  0.0, -1.0,
+		 0.0,  0.0, -1.0,
+		 0.0,  0.0, -1.0,
+		//f2
+		 0.0,  1.0,  0.0,
+		 0.0,  1.0,  0.0,
+		 0.0,  1.0,  0.0,
+		 0.0,  1.0,  0.0,
+		//f3
+		 0.0, -1.0,  0.0,
+		 0.0, -1.0,  0.0,
+		 0.0, -1.0,  0.0,
+		 0.0, -1.0,  0.0,
+		//f4
+		 1.0,  0.0,  0.0,
+		 1.0,  0.0,  0.0,
+		 1.0,  0.0,  0.0,
+		 1.0,  0.0,  0.0,
+		//f5
+		-1.0,  0.0,  0.0,
+		-1.0,  0.0,  0.0,
+		-1.0,  0.0,  0.0,
+		-1.0,  0.0,  0.0
+	];
+	glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(normalData), glContext.STATIC_DRAW);
+	this.normalBuffer.itemSize = 3;
+	this.normalBuffer.itemCount = normalData.length / 3;
 
+	//tex coords
 	this.uvBuffer = glContext.createBuffer();
 	glContext.bindBuffer(glContext.ARRAY_BUFFER, this.uvBuffer);
 	var uvCoords = [
