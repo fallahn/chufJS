@@ -16,7 +16,7 @@ function ShaderProgram(name)
 	this.texCoordAttribute  = null;
 }
 
-function ShaderManager()
+function ShaderResource()
 {
 	var shaders = [];
 

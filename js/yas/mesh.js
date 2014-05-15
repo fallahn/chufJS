@@ -32,84 +32,12 @@ function Mesh()
 		}
 	}
 
-	//TODO these should be parent node properties
-	var mvMatrix = mat4.create();
-	var rotation =
-	{
-		x : 0.0,
-		y : 0.0,
-		z : 0.0
-	}
-
-	var position = 
-	{
-		x : 0.0,
-		y : 0.0,
-		z : 0.0		
-	}
-
-	var scale = 
-	{
-		x : 1.0,
-		y : 1.0,
-		z : 1.0		
-	}
-
-	this.setRotation = function(x, y, z)
-	{
-		rotation.x = x;
-		rotation.y = y;
-		rotation.z = z;
-	}
-
-	this.rotate = function(x, y, z)
-	{
-		rotation.x += x;
-		rotation.y += y;
-		rotation.z += z;
-	}
-
-	this.setPosition = function(x, y, z)
-	{
-		position.x = x;
-		position.y = y;
-		position.z = z;
-	}
-
-	this.move = function(x, y, z)
-	{
-		position.x += x;
-		position.y += y;
-		position.z += z
-	}
-
-	this.setScale = function(x, y, z)
-	{
-		scale.x = x;
-		scale.y = y;
-		scale.z = z;
-	}
-
-	this.scale = function(x, y, z)
-	{
-		scale.x *= x;
-		scale.y *= y;
-		scale.z *= z;
-	}
-
-	this.draw = function(glContext, pMatrix)
+	this.draw = function(glContext, matrices)
 	{
 		glContext.useProgram(shaderProgram.program);
 
-		mat4.identity(mvMatrix);
-		mat4.translate(mvMatrix, [position.x, position.y, position.z]);
-		mat4.rotate(mvMatrix, rotation.y, [0, 1, 0]);
-		mat4.rotate(mvMatrix, rotation.z, [0, 0, 1]);
-		mat4.rotate(mvMatrix, rotation.x, [1, 0, 0]);
-		mat4.scale(mvMatrix, [scale.x, scale.y, scale.z]);
-
-		glContext.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
-		glContext.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
+		glContext.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, matrices.mvMatrix);
+		glContext.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, matrices.pMatrix);
 
 		//bind shader attrib buffers - TODO check which need to be bound for current shader
 		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.positionBuffer);
@@ -119,7 +47,7 @@ function Mesh()
 		glContext.vertexAttribPointer(shaderProgram.texCoordAttribute, this.uvBuffer.itemSize, glContext.FLOAT, false, 0, 0);
 
 		//check for textures and bind loaded
-		if(colourTexture != null)
+		if(colourTexture)
 		{
 			glContext.activeTexture(glContext.TEXTURE0);
 			colourTexture.bind();
@@ -132,7 +60,7 @@ function Mesh()
 	}	
 }
 
-
+//TODO create a mesh resource so meshes can easily be attached to multiple nodes
 
 
 //----sphere mesh type----//

@@ -46,7 +46,7 @@ function Texture(glContext, name)
 	}
 }
 
-function TextureManager()
+function TextureResource()
 {
 	var textures = [];
 
