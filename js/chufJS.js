@@ -1,14 +1,14 @@
 //////////////
 // Main App //
 //////////////
-function runApp()
+function runApp(canvasId)
 {
-	var app = new yasApp();
-	app.start();
+	var app = new chufApp();
+	app.start(canvasId);
 }
 
 
-function yasApp()
+function chufApp()
 {
 
 	var glContext;
@@ -16,9 +16,9 @@ function yasApp()
 	var textureResource = new TextureResource();
 	var scene = new Scene();
 
-	this.start = function()
+	this.start = function(canvasId)
 	{
-		var canvas = document.getElementById("globeCanvas");
+		var canvas = document.getElementById(canvasId);
 		initGL(canvas);
 		loadScene();
 
@@ -55,6 +55,7 @@ function yasApp()
 			sceneNode.rotate(0.0, 3.0 * dt, 0.0);
 		}
 		globeNode.setTexture("colour", textureResource.getTexture(glContext, "img/earth_map/earth_colour.png"));
+		globeNode.setTexture("specular", textureResource.getTexture(glContext, "img/earth_map/earth_specular.png"));
 		scene.addChild(globeNode);
 	}
 

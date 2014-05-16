@@ -1,23 +1,6 @@
 ///////////////////////////////////////////
 // webGL shaders 
 ///////////////////////////////////////////
-function ShaderProgram(name)
-{
-	this.name               = name;
-	this.program            = null;
-
-	this.pMatrixUniform     = null;
-	this.mvMatrixUniform    = null;
-	this.nMatrixUniform     = null;
-	this.colourMapUniform   = null;
-	this.normalMapUniform   = null;
-	this.specularMapUniform = null;
-
-	this.vertexPosAttribute = null;
-	this.texCoordAttribute  = null;
-	this.vertexNormalAttribute = null;
-	//TODO make this more flexible with setters for custom shaders
-}
 
 function ShaderResource()
 {
@@ -46,7 +29,8 @@ function ShaderResource()
 			vertShader = getShader(glContext, phongVert, "vert");
 		break;
 		case "normal":
-			//TODO load normal map shader and set shader program unform locations
+			fragShader = getShader(glContext, normalFrag, "frag");
+			vertShader = getShader(glContext, normalVert, "vert");
 		break;
 
 		default: return null;
@@ -60,18 +44,30 @@ function ShaderResource()
 		if(!glContext.getProgramParameter(newShader.program, glContext.LINK_STATUS))
 			alert("Failed to Link Shader Program");
 
+		//TODO refactor into own function for getting shader attribs, more flexible for custom shaders
 		newShader.vertexPosAttribute = glContext.getAttribLocation(newShader.program, "vertPos");
 		glContext.enableVertexAttribArray(newShader.vertexPosAttribute);
 		newShader.texCoordAttribute = glContext.getAttribLocation(newShader.program, "texCoord");
 		glContext.enableVertexAttribArray(newShader.texCoordAttribute);
 		newShader.vertexNormalAttribute = glContext.getAttribLocation(newShader.program, "vertNormal");
 		glContext.enableVertexAttribArray(newShader.vertexNormalAttribute);
+		if(name === "normal")
+		{
+		//	newShader.vertexTanAttribute = glContext.getAttribLocation(newShader.program, "vertTan");
+		//	glContext.enableVertexAttribArray(newShader.vertexTanAttribute);
+		//	newShader.vertexBitanAttribute = glContext.getAttribLocation(newShader.program, "vertBitan");
+		//	glContext.enableVertexAttribArray(newShader.vertexBitanAttribute);
+		}
 
 		newShader.pMatrixUniform = glContext.getUniformLocation(newShader.program, "pMat");
 		newShader.mvMatrixUniform = glContext.getUniformLocation(newShader.program, "mvMat");
 		newShader.nMatrixUniform = glContext.getUniformLocation(newShader.program, "nMat");
 		newShader.colourMapUniform = glContext.getUniformLocation(newShader.program, "colourMap");
 		//TODO lightpos uniform
+		if(name == "normal")
+		{
+			newShader.specularMapUniform = glContext.getUniformLocation(newShader.program, "specularMap");
+		}
 
 		shaders.push(newShader);
 		return newShader;
@@ -102,6 +98,27 @@ function ShaderResource()
 			return shader;
 		}
 	}
+
+	//----------------------------------------
+	function ShaderProgram(name)
+	{
+		this.name                  = name;
+		this.program               = null;
+
+		this.pMatrixUniform        = null;
+		this.mvMatrixUniform       = null;
+		this.nMatrixUniform        = null;
+		this.colourMapUniform      = null;
+		this.normalMapUniform      = null;
+		this.specularMapUniform    = null;
+
+		this.vertexPosAttribute    = null;
+		this.texCoordAttribute     = null;
+		this.vertexNormalAttribute = null;
+		this.vertexTanAttribute    = null;
+		this.vertexBitanAttribute  = null;
+		//TODO make this more flexible with setters for custom shaders
+	}	
 }
 
 
@@ -116,15 +133,23 @@ var phongFrag = [ //TODO finish this
 "	uniform sampler2D colourMap;",
 //"	uniform vec3 lightPosition;",
 
-"	vec3 lightPosition = vec3(3.0, 3.0, 3.0);", //TODO make uniforms
-"	vec3 lightColour = vec3(1.0, 1.0, 0.9);",
+"	vec3 lightPosition = vec3(8.0, 8.0, 3.0);", //TODO make uniforms
+"	vec3 ambientColour = vec3(0.05, 0.05, 0.05);",
+"	vec3 specularColour = vec3(1.0, 1.0, 1.0);",
+"	float shininess = 128.0;", //0 - 255
 
 "	void main(void)",
 "	{",
 "		vec3 lightDir = normalize(lightPosition - vPosition.xyz);",
-"		vec3 lightAmount = lightColour * max(dot(normalize(vNormal), lightDir), 0.0);",
-"		vec4 colour = texture2D(colourMap, vTexCoord.xy);",
-"		gl_FragColor = vec4(colour.rgb * lightAmount, colour.a);",
+"		vec3 normal = normalize(vNormal);",
+"		vec3 eyeDir = normalize(-vPosition.xyz);",
+"		vec3 reflectDir = reflect(-lightDir, normal);",
+"		float specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), shininess);",
+"		float diffuseAmount = max(dot(normal, lightDir), 0.0);",
+"		vec4 diffuseColour = texture2D(colourMap, vTexCoord.xy);",
+"		vec3 lightAmount = ambientColour + (diffuseColour.rgb * diffuseAmount) + (specularColour * specAmount);",
+
+"		gl_FragColor = vec4(diffuseColour.rgb * lightAmount, diffuseColour.a);",
 "	}"].join("\n");
 
 var phongVert = [
@@ -153,25 +178,51 @@ var phongVert = [
 var normalFrag = [//TODO make this actually a normal shader
 "	precision mediump float;",
 "	varying vec2 vTexCoord;",
+"	varying vec3 vNormal;",
+"	varying vec4 vPosition;",
 
 "	uniform sampler2D colourMap;",
+"	uniform sampler2D specularMap;",
+//"	uniform vec3 lightPosition;",
+
+"	vec3 lightPosition = vec3(8.0, 8.0, 3.0);", //TODO make uniforms
+"	vec3 diffuseColour = vec3(0.9, 0.9, 0.9);",
+"	vec3 ambientColour = vec3(0.01, 0.01, 0.05);",
+"	vec3 specularColour = vec3(1.0, 1.0, 1.0);",
 
 "	void main(void)",
 "	{",
-"		gl_FragColor = texture2D(colourMap, vTexCoord.xy);",
+"		vec3 lightDir = normalize(lightPosition - vPosition.xyz);",
+"		vec3 normal = normalize(vNormal);",
+"		vec3 eyeDir = normalize(-vPosition.xyz);",
+"		vec3 reflectDir = reflect(-lightDir, normal);",
+"		float specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), 120.0);",//" (texture2D(specularMap, vTexCoord.xy).r * 255.0));",
+"		float diffuseAmount = max(dot(normal, lightDir), 0.0);",
+"		vec3 lightAmount = ambientColour + (specularColour * specAmount) + (diffuseColour * diffuseAmount);",
+
+"		vec4 colour = texture2D(colourMap, vTexCoord.xy);",
+"		gl_FragColor = vec4(colour.rgb * lightAmount, colour.a);",
 "	}"].join("\n");
 
 var normalVert = [//TODO make this actually a normal shader
 "	attribute vec3 vertPos;",
 "	attribute vec2 texCoord;",
+"	attribute vec3 vertNormal;",
+"	attribute vec3 vertTan;",
+"	attribute vec3 vertBitan;",
 
 "	uniform mat4 mvMat;",
 "	uniform mat4 pMat;",
+"	uniform mat3 nMat;",
 
 "	varying vec2 vTexCoord;",
+"	varying vec3 vNormal;",
+"	varying vec4 vPosition;",
 
 "	void main(void)",
 "	{",
-"		gl_Position = pMat * mvMat * vec4(vertPos, 1.0);",
+"		vPosition = mvMat * vec4(vertPos, 1.0);",
+"		gl_Position = pMat * vPosition;",
 "		vTexCoord = texCoord;",
+"		vNormal = nMat * vertNormal;",
 "	}"].join("\n");

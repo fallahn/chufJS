@@ -2,6 +2,8 @@
 function Mesh()
 {
 	this.normalBuffer   = null;
+	this.tanBuffer      = null;
+	this.bitanBuffer    = null;
 	this.uvBuffer       = null;
 	this.positionBuffer = null;
 	this.indexBuffer    = null;
@@ -54,6 +56,11 @@ function Mesh()
 		{
 			glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
 			glContext.vertexAttribPointer(shaderProgram.vertexNormalAttribute, this.normalBuffer.itemSize, glContext.FLOAT, false, 0, 0);
+			
+			if(shaderProgram.name === "normal")
+			{
+				//bind normal tangents
+			}
 		}
 
 		//check for textures and bind loaded
@@ -63,10 +70,39 @@ function Mesh()
 			colourTexture.bind();
 			glContext.uniform1i(shaderProgram.colourMapUniform, 0);
 		}
+		if(specularTexture)
+		{
+			glContext.activeTexture(glContext.TEXTURE1);
+			specularTexture.bind();
+			glContext.uniform1i(shaderProgram.specularMapUniform, 1);
+		}
 
 		//bind element buffer and draw
 		glContext.bindBuffer(glContext.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 		glContext.drawElements(glContext.TRIANGLES, this.indexBuffer.itemCount, glContext.UNSIGNED_SHORT, 0);
+	}
+
+	this.calcBitangents = function() //TODO we can't access position data directly from the buffer
+	{								//so we need to do this before loading data into buffers from array
+		if(this.indexBuffer)
+		{
+			for(i = 0; i < this.indexBuffer.itemCount; i += 3)
+			{
+				var face = 
+				{
+					v1 : vec3.create(),
+					v2 : vec3.create(),
+					v3 : vec3.create()
+				}
+				face.v1.x = this.positionBuffer[(i * this.positionBuffer.itemSize)];
+				face.v1.y = this.positionBuffer[(i * this.positionBuffer.itemSize) + 1];
+				face.v1.z = this.positionBuffer[(i * this.positionBuffer.itemSize) + 2];
+
+				face.v2.x = this.positionBuffer[((i + 1) * this.positionBuffer.itemSize)];
+
+				face.v3.x = this.positionBuffer[((i + 2) * this.positionBuffer.itemSize)];
+			}
+		}
 	}	
 }
 
@@ -154,6 +190,8 @@ function Sphere(glContext, radius)
 	glContext.bufferData(glContext.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexData), glContext.STATIC_DRAW);
 	this.indexBuffer.itemSize = 1;
 	this.indexBuffer.itemCount = indexData.length;
+
+	this.calcBitangents();
 }
 Sphere.prototype = new Mesh();
 
@@ -174,7 +212,7 @@ function Cube(glContext, length)
 		-length, -length, -length,
 		-length,  length, -length,
 		 length,  length, -length,
-		 length, -length, -length
+		 length, -length, -length,
 		//f2
 		-length,  length, -length,
 		-length,  length,  length,
@@ -203,7 +241,7 @@ function Cube(glContext, length)
 	//normal data
 	this.normalBuffer = glContext.createBuffer();
 	glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
-	var normalData = [
+	var normals = [
 		//f0
 		 0.0,  0.0,  1.0,
 		 0.0,  0.0,  1.0,
@@ -235,9 +273,9 @@ function Cube(glContext, length)
 		-1.0,  0.0,  0.0,
 		-1.0,  0.0,  0.0
 	];
-	glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(normalData), glContext.STATIC_DRAW);
+	glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(normals), glContext.STATIC_DRAW);
 	this.normalBuffer.itemSize = 3;
-	this.normalBuffer.itemCount = normalData.length / 3;
+	this.normalBuffer.itemCount = normals.length / 3;
 
 	//tex coords
 	this.uvBuffer = glContext.createBuffer();
@@ -286,7 +324,7 @@ function Cube(glContext, length)
 		 8,  9, 10,   8, 10, 11,
 		12, 13, 14,  12, 14, 15,
 		16, 17, 18,  16, 18, 19,
-		20, 21, 22,  21, 22, 23
+		20, 21, 22,  20, 22, 23
 	];
 	glContext.bufferData(glContext.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), glContext.STATIC_DRAW);
 	this.indexBuffer.itemCount = indices.length;
