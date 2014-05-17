@@ -82,31 +82,156 @@ function Mesh()
 		glContext.drawElements(glContext.TRIANGLES, this.indexBuffer.itemCount, glContext.UNSIGNED_SHORT, 0);
 	}
 
-	this.calcBitangents = function() //TODO we can't access position data directly from the buffer
-	{								//so we need to do this before loading data into buffers from array
-		if(this.indexBuffer)
+	this.createNormals = function(positions, uvs, indices, glContext)
+	{								
+		if(!this.positionBuffer || !this.uvBuffer) return;
+		var normals = [];
+		var tangents = [];
+		var bitangents = [];
+		for(i = 0; i < positions.length; ++i)
 		{
-			for(i = 0; i < this.indexBuffer.itemCount; i += 3)
-			{
-				var face = 
-				{
-					v1 : vec3.create(),
-					v2 : vec3.create(),
-					v3 : vec3.create()
-				}
-				face.v1.x = this.positionBuffer[(i * this.positionBuffer.itemSize)];
-				face.v1.y = this.positionBuffer[(i * this.positionBuffer.itemSize) + 1];
-				face.v1.z = this.positionBuffer[(i * this.positionBuffer.itemSize) + 2];
-
-				face.v2.x = this.positionBuffer[((i + 1) * this.positionBuffer.itemSize)];
-
-				face.v3.x = this.positionBuffer[((i + 2) * this.positionBuffer.itemSize)];
-			}
+			normals.push(0.0);
+			tangents.push(0.0);
+			bitangents.push(0.0);
 		}
-	}	
+
+
+		for(i = 0; i < indices.length; i += 3)
+		{
+			var face = 
+			{
+				uv0 : vec2.create(),
+				uv1 : vec2.create(),
+				uv2 : vec2.create(),
+
+				p0 : vec3.create(),
+				p1 : vec3.create(),
+				p2 : vec3.create(),
+				normal : vec3.create()
+			}
+			//calc face normal
+			face.p0 = getVec3(indices[i], positions);
+			face.p1 = getVec3(indices[i + 1], positions);
+			face.p2 = getVec3(indices[i + 2], positions);
+
+			var deltaPos1 = vec3.create();
+			var deltaPos2 = vec3.create();
+			vec3.subtract(face.p1, face.p0, deltaPos1);
+			vec3.subtract(face.p2, face.p0, deltaPos2);
+			vec3.cross(deltaPos1, deltaPos2, face.normal);
+
+			//calc normal tan/bitan
+			face.uv0 = getVec2(indices[i], uvs);
+			face.uv1 = getVec2(indices[i + 1], uvs);
+			face.uv2 = getVec2(indices[i + 2], uvs);
+
+			var deltaUV1 = vec2.create();
+			var deltaUV2 = vec2.create();
+			vec2.subtract(face.uv1, face.uv0, deltaUV1);
+			vec2.subtract(face.uv2, face.uv0, deltaUV2);
+			
+			var temp1 = vec3.create();
+			vec3.scale(deltaPos1, deltaUV2[1], temp1);
+			var temp2 = vec3.create();
+			vec3.scale(deltaPos2, deltaUV1[1], temp2);
+			vec3.subtract(temp1, temp2, temp1);
+
+			var r = 1.0 / (deltaUV1[0] * deltaUV2[1] - deltaUV1[1] * deltaUV2[0]);
+			var tangent = vec3.create();
+			vec3.scale(temp1, r, tangent);
+
+			vec3.scale(deltaPos2, deltaUV1[0], temp1);
+			vec3.scale(deltaPos1, deltaUV2[0], temp2);
+			vec3.subtract(temp1, temp2, temp1);
+
+			var bitangent = vec3.create();
+			vec3.scale(temp1, r, bitangent);
+
+			//calc weight and output normal vecs
+			var vertPositions = [face.p0, face.p1, face.p2];
+			for(j = 0; j < vertPositions.length; ++j)
+			{
+
+				var a = vec3.create();
+				vec3.subtract(vertPositions[(j + 1) % 3], vertPositions[j], a);
+				var b = vec3.create();
+				vec3.subtract(vertPositions[(j + 2) % 3], vertPositions[j], b);
+				var weight = Math.acos(vec3.dot(a, b) / (vec3.length(a) * vec3.length(b)));
+
+				var newNormal = vec3.create();
+				vec3.scale(face.normal, weight, newNormal);
+				var currIndex = i + j;
+				addVec3(currIndex, normals, newNormal);
+				addVec3(currIndex, tangents, tangent);
+				addVec3(currIndex, bitangents, bitangent);
+			}
+
+
+			//TODO sum and normalise normals of shared vertices
+		}
+
+		//normalise all 3 arrays
+		for(i = 0; i < this.positionBuffer.itemCount; i++)
+		{
+			var n = getVec3(i, normals);
+			vec3.normalize(n, n);
+			setVec3(normals, i, n);
+		
+			var t = getVec3(i, tangents);
+			vec3.normalize(t, t);
+			setVec3(i, tangents, t);
+		
+			var b = getVec3(i, bitangents);
+			vec3.normalize(b, b);
+			setVec3(i, bitangents, b);
+		}
+
+		//create normal buffers
+		this.normalBuffer = glContext.createBuffer();
+		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
+		glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(normals), glContext.STATIC_DRAW);
+		this.normalBuffer.itemSize = 3;
+		this.normalBuffer.itemCount = normals.length / 3;
+	}
+
+	function getVec2(index, array)
+	{
+		var offset = index * 2;
+		var vec = vec2.create();
+		vec[0] = array[offset];
+		vec[1] = array[offset + 1];
+		return vec;
+	}
+
+	function getVec3(index, array)
+	{
+		var offset = index * 3;
+		var vec = vec3.create();
+		vec[0] = array[offset];
+		vec[1] = array[offset + 1];
+		vec[2] = array[offset + 2];
+		return vec;
+	}
+
+	function addVec3(index, array, value)
+	{
+		var offset = index * 3;
+		array[offset] += value[0];
+		array[offset + 1] += value[1];
+		array[offset + 2] += value[2];
+	}
+
+	function setVec3(index, array, value)
+	{
+		var offset = index * 3;
+		array[offset] = value[0];
+		array[offset + 1] = value[1];
+		array[offset + 2] = value[2];
+	}
 }
 
 //TODO create a mesh resource so meshes can easily be attached to multiple nodes
+//and mesh ctor is encapsulated
 
 
 //----sphere mesh type----//
@@ -116,7 +241,7 @@ function Sphere(glContext, radius)
 	var stripCount = 30;
 
 	var vertPosData = [];
-	var normalData = [];
+	//var normalData = [];
 	var uvData = [];
 
 	for(var band = 0; band <= bandCount; band++)
@@ -141,9 +266,9 @@ function Sphere(glContext, radius)
 			vertPosData.push(radius * y);
 			vertPosData.push(radius * z);
 
-			normalData.push(x);
-			normalData.push(y);
-			normalData.push(z);
+			//normalData.push(x);
+			//normalData.push(y);
+			//normalData.push(z);
 
 			uvData.push(u);
 			uvData.push(v);
@@ -167,11 +292,11 @@ function Sphere(glContext, radius)
 		}
 	}
 
-	this.normalBuffer = glContext.createBuffer();
-	glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
-	glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(normalData), glContext.STATIC_DRAW);
-	this.normalBuffer.itemSize = 3;
-	this.normalBuffer.itemCount = normalData.length / 3;
+	//this.normalBuffer = glContext.createBuffer();
+	//glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
+	//glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(normalData), glContext.STATIC_DRAW);
+	//this.normalBuffer.itemSize = 3;
+	//this.normalBuffer.itemCount = normalData.length / 3;
 
 	this.uvBuffer = glContext.createBuffer();
 	glContext.bindBuffer(glContext.ARRAY_BUFFER, this.uvBuffer);
@@ -191,7 +316,7 @@ function Sphere(glContext, radius)
 	this.indexBuffer.itemSize = 1;
 	this.indexBuffer.itemCount = indexData.length;
 
-	this.calcBitangents();
+	this.createNormals(vertPosData, uvData, indexData, glContext);
 }
 Sphere.prototype = new Mesh();
 
@@ -239,7 +364,7 @@ function Cube(glContext, length)
 	this.positionBuffer.itemCount = verts.length / 3;
 
 	//normal data
-	this.normalBuffer = glContext.createBuffer();
+	/*this.normalBuffer = glContext.createBuffer();
 	glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
 	var normals = [
 		//f0
@@ -275,7 +400,7 @@ function Cube(glContext, length)
 	];
 	glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(normals), glContext.STATIC_DRAW);
 	this.normalBuffer.itemSize = 3;
-	this.normalBuffer.itemCount = normals.length / 3;
+	this.normalBuffer.itemCount = normals.length / 3;*/
 
 	//tex coords
 	this.uvBuffer = glContext.createBuffer();
@@ -329,5 +454,7 @@ function Cube(glContext, length)
 	glContext.bufferData(glContext.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), glContext.STATIC_DRAW);
 	this.indexBuffer.itemCount = indices.length;
 	this.indexBuffer.itemSize = 1;
+
+	this.createNormals(verts, uvCoords, indices, glContext);
 }
 Cube.prototype = new Mesh();

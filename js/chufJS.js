@@ -10,7 +10,6 @@ function runApp(canvasId)
 
 function chufApp()
 {
-
 	var glContext;
 	var shaderResource = new ShaderResource();
 	var textureResource = new TextureResource();
@@ -44,7 +43,7 @@ function chufApp()
 
 	function loadScene()
 	{
-		var globeMesh = new Sphere(glContext, 2.5);
+		var globeMesh = new Cube(glContext, 2.5);
 		globeMesh.setShader(shaderResource.getShaderProgram(glContext, "phong"));
 		
 		var globeNode = new scene.createNode();
@@ -87,12 +86,12 @@ function chufApp()
 		lastTime = now;		
 	}
 
-}//yasApp
+}//chufApp
 
 // requestAnimationFrame() shim by Paul Irish
 // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 window.requestAnimFrame =
- (
+(
 	function() 
 	{
  		return window.requestAnimationFrame ||
