@@ -149,7 +149,7 @@ function Mesh()
 
 			//calc weight and output normal vecs
 			var vertPositions = [face.p0, face.p1, face.p2];
-			for(j = 0; j < vertPositions.length; ++j)
+			for(j = 0; j < vertPositions.length; j++)
 			{
 
 				var a = vec3.create();
@@ -160,12 +160,13 @@ function Mesh()
 
 				var newNormal = vec3.create();
 				vec3.scale(face.normal, weight, newNormal);
-				var currIndex = i + j;
+				var currIndex = indices[i + j];
 				addVec3(currIndex, normals, newNormal);
 				addVec3(currIndex, tangents, tangent);
 				addVec3(currIndex, bitangents, bitangent);
+				//console.log(currIndex);
 			}
-
+			//console.log(indices[i], indices[i + 1], indices[i + 2]);
 
 			//TODO sum and normalise normals of shared vertices
 		}
@@ -176,14 +177,18 @@ function Mesh()
 			var n = getVec3(i, normals);
 			vec3.normalize(n, n);
 			setVec3(normals, i, n);
+			//if(i < 10)
+				//console.log("n: " + n[0], n[1], n[2]);
 		
 			var t = getVec3(i, tangents);
 			vec3.normalize(t, t);
 			setVec3(i, tangents, t);
+			//console.log("t: " + t[0], t[1], t[2]);
 		
 			var b = getVec3(i, bitangents);
 			vec3.normalize(b, b);
 			setVec3(i, bitangents, b);
+			//console.log("b: " + b[0], b[1], b[2]);
 		}
 
 		//create normal buffers
@@ -241,7 +246,7 @@ function Sphere(glContext, radius)
 	var stripCount = 30;
 
 	var vertPosData = [];
-	//var normalData = [];
+	var normalData = [];
 	var uvData = [];
 
 	for(var band = 0; band <= bandCount; band++)
@@ -266,9 +271,9 @@ function Sphere(glContext, radius)
 			vertPosData.push(radius * y);
 			vertPosData.push(radius * z);
 
-			//normalData.push(x);
-			//normalData.push(y);
-			//normalData.push(z);
+			normalData.push(x);
+			normalData.push(y);
+			normalData.push(z);
 
 			uvData.push(u);
 			uvData.push(v);
