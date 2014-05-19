@@ -46,7 +46,7 @@ function chufApp()
 	function loadScene()
 	{
 		var globeMesh = new Sphere(glContext, 2.5);
-		globeMesh.setShader(shaderResource.getShaderProgram(glContext, "phong"));
+		globeMesh.setShader(shaderResource.getShaderProgram(glContext, "normal"));
 		globeMesh.setDebugShader(shaderResource.getShaderProgram(glContext, "debug"), glContext);
 		
 		var globeNode = new scene.createNode();
@@ -58,6 +58,7 @@ function chufApp()
 		}
 		globeNode.setTexture("colour", textureResource.getTexture(glContext, "img/earth_map/earth_colour.png"));
 		globeNode.setTexture("specular", textureResource.getTexture(glContext, "img/earth_map/earth_specular.png"));
+		globeNode.setTexture("normal", textureResource.getTexture(glContext, "img/earth_map/earth_normal.png"));
 		scene.addChild(globeNode);
 	}
 

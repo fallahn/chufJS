@@ -79,6 +79,10 @@ function Mesh()
 			if(shaderProgram.name === "normal")
 			{
 				//bind normal tangents
+				glContext.bindBuffer(glContext.ARRAY_BUFFER, this.tanBuffer);
+				glContext.vertexAttribPointer(shaderProgram.vertexTanAttribute, this.tanBuffer.itemSize, glContext.FLOAT, false, 0, 0);
+				glContext.bindBuffer(glContext.ARRAY_BUFFER, this.bitanBuffer);
+				glContext.vertexAttribPointer(shaderProgram.vertexBitanAttribute, this.bitanBuffer.itemSize, glContext.FLOAT, false, 0, 0);
 			}
 		}
 
@@ -94,6 +98,13 @@ function Mesh()
 			glContext.activeTexture(glContext.TEXTURE1);
 			specularTexture.bind();
 			glContext.uniform1i(shaderProgram.specularMapUniform, 1);
+		}
+
+		if(normalTexture)
+		{
+			glContext.activeTexture(glContext.TEXTURE2);
+			normalTexture.bind();
+			glContext.uniform1i(shaderProgram.normalMapUniform, 2);
 		}
 
 		//bind element buffer and draw
@@ -115,12 +126,12 @@ function Mesh()
 			var green = vec4.create([0.0, 1.0, 0.0, 1.0]);
 			var blue = vec4.create([0.0, 0.0, 1.0, 1.0]);
 
-			var colourLocation = glContext.getUniformLocation(debugShader.program, "colour");
 			var normalLength = 0.2;	
 
 			for(i = 0; i < this.vertexData.normals.length; i+=3)
 			{
-				glContext.uniform4fv(colourLocation, red);
+				//glContext.uniform4fv(colourLocation, red);
+				debugShader.setUniformVec4("colour", red);
 				var verts = [
 					this.vertexData.positions[i],
 					this.vertexData.positions[i + 1],
@@ -133,7 +144,7 @@ function Mesh()
 				glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(verts), glContext.DYNAMIC_DRAW);
 				glContext.drawArrays(glContext.LINES, 0, 2);
 
-				glContext.uniform4fv(colourLocation, green);
+				debugShader.setUniformVec4("colour", green);
 				verts = [
 					this.vertexData.positions[i],
 					this.vertexData.positions[i + 1],
@@ -146,7 +157,7 @@ function Mesh()
 				glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(verts), glContext.DYNAMIC_DRAW);
 				glContext.drawArrays(glContext.LINES, 0, 2);
 
-				glContext.uniform4fv(colourLocation, blue);
+				debugShader.setUniformVec4("colour", blue);
 				verts = [
 					this.vertexData.positions[i],
 					this.vertexData.positions[i + 1],
@@ -249,9 +260,7 @@ function Mesh()
 				addVec3(currIndex, normals, newNormal);
 				addVec3(currIndex, tangents, tangent);
 				addVec3(currIndex, bitangents, bitangent);
-				//console.log(currIndex);
 			}
-			//console.log(indices[i], indices[i + 1], indices[i + 2]);
 
 			//TODO sum and normalise normals of shared vertices
 		}
@@ -262,20 +271,14 @@ function Mesh()
 			var n = getVec3(i, normals);
 			vec3.normalize(n, n);
 			setVec3(i, normals, n);
-			//if(i < 10)
-			//console.log("n: " + n[0], n[1], n[2]);
-			//var j = i*3;
-			//console.log("arr: " + normals[j], normals[j+1], normals[j+2]);
 		
 			var t = getVec3(i, tangents);
 			vec3.normalize(t, t);
 			setVec3(i, tangents, t);
-			//console.log("t: " + t[0], t[1], t[2]);
 		
 			var b = getVec3(i, bitangents);
 			vec3.normalize(b, b);
 			setVec3(i, bitangents, b);
-			//console.log("b: " + b[0], b[1], b[2]);
 		}
 
 		//create normal buffers
@@ -284,6 +287,18 @@ function Mesh()
 		glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(normals), glContext.STATIC_DRAW);
 		this.normalBuffer.itemSize = 3;
 		this.normalBuffer.itemCount = normals.length / 3;
+
+		this.tanBuffer = glContext.createBuffer();
+		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.tanBuffer);
+		glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(tangents), glContext.STATIC_DRAW);
+		this.tanBuffer.itemSize = 3;
+		this.tanBuffer.itemCount = tangents.length / 3;
+
+		this.bitanBuffer = glContext.createBuffer();
+		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.bitanBuffer);
+		glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(bitangents), glContext.STATIC_DRAW);
+		this.bitanBuffer.itemSize = 3;
+		this.bitanBuffer.itemCount = bitangents.length / 3;
 	}
 
 	function getVec2(index, array)
@@ -329,8 +344,8 @@ function Mesh()
 //----sphere mesh type----//
 function Sphere(glContext, radius)
 {
-	var bandCount = 30;
-	var stripCount = 30;
+	var bandCount = 16;
+	var stripCount = 16;
 
 	var vertPosData = this.vertexData.positions;
 	var uvData = this.vertexData.UVs;
@@ -350,7 +365,7 @@ function Sphere(glContext, radius)
 			var y = cosTheta;
 			var x = sinPhi * sinTheta;
 			var z = cosPhi * sinTheta;			
-			var u = (strip / stripCount);
+			var u = (strip / stripCount) + 0.5;
 			var v = 1 - (band / bandCount);
 
 			vertPosData.push(radius * x);
