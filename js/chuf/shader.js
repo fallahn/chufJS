@@ -32,7 +32,10 @@ function ShaderResource()
 			fragShader = getShader(glContext, normalFrag, "frag");
 			vertShader = getShader(glContext, normalVert, "vert");
 		break;
-
+		case "debug":
+			fragShader = getShader(glContext, debugFrag, "frag");
+			vertShader = getShader(glContext, debugVert, "vert");
+		break;
 		default: return null;
 		}
 		
@@ -47,27 +50,32 @@ function ShaderResource()
 		//TODO refactor into own function for getting shader attribs, more flexible for custom shaders
 		newShader.vertexPosAttribute = glContext.getAttribLocation(newShader.program, "vertPos");
 		glContext.enableVertexAttribArray(newShader.vertexPosAttribute);
-		newShader.texCoordAttribute = glContext.getAttribLocation(newShader.program, "texCoord");
-		glContext.enableVertexAttribArray(newShader.texCoordAttribute);
-		newShader.vertexNormalAttribute = glContext.getAttribLocation(newShader.program, "vertNormal");
-		glContext.enableVertexAttribArray(newShader.vertexNormalAttribute);
-		if(name === "normal")
-		{
-		//	newShader.vertexTanAttribute = glContext.getAttribLocation(newShader.program, "vertTan");
-		//	glContext.enableVertexAttribArray(newShader.vertexTanAttribute);
-		//	newShader.vertexBitanAttribute = glContext.getAttribLocation(newShader.program, "vertBitan");
-		//	glContext.enableVertexAttribArray(newShader.vertexBitanAttribute);
-		}
-
+		
 		newShader.pMatrixUniform = glContext.getUniformLocation(newShader.program, "pMat");
 		newShader.mvMatrixUniform = glContext.getUniformLocation(newShader.program, "mvMat");
-		newShader.nMatrixUniform = glContext.getUniformLocation(newShader.program, "nMat");
-		newShader.colourMapUniform = glContext.getUniformLocation(newShader.program, "colourMap");
-		//TODO lightpos uniform
-		if(name == "normal")
+
+		if(name != "debug")
 		{
-			newShader.specularMapUniform = glContext.getUniformLocation(newShader.program, "specularMap");
+			newShader.texCoordAttribute = glContext.getAttribLocation(newShader.program, "texCoord");
+			glContext.enableVertexAttribArray(newShader.texCoordAttribute);
+			newShader.vertexNormalAttribute = glContext.getAttribLocation(newShader.program, "vertNormal");
+			glContext.enableVertexAttribArray(newShader.vertexNormalAttribute);
+			
+			newShader.nMatrixUniform = glContext.getUniformLocation(newShader.program, "nMat");
+			newShader.colourMapUniform = glContext.getUniformLocation(newShader.program, "colourMap");
+
+			if(name === "normal")
+			{
+			//	newShader.vertexTanAttribute = glContext.getAttribLocation(newShader.program, "vertTan");
+			//	glContext.enableVertexAttribArray(newShader.vertexTanAttribute);
+			//	newShader.vertexBitanAttribute = glContext.getAttribLocation(newShader.program, "vertBitan");
+			//	glContext.enableVertexAttribArray(newShader.vertexBitanAttribute);
+
+				newShader.specularMapUniform = glContext.getUniformLocation(newShader.program, "specularMap");
+			}
 		}
+
+		//TODO lightpos uniform
 
 		shaders.push(newShader);
 		return newShader;
@@ -121,6 +129,24 @@ function ShaderResource()
 	}	
 }
 
+
+//--------------------------------------------------------
+var debugFrag = [
+"	precision mediump float;",
+"	uniform vec4 colour;",
+"	void main()",
+"	{",
+"		gl_FragColor = colour;",
+"	}"].join("\n");
+
+var debugVert = [
+"	attribute vec3 vertPos;",
+"	uniform mat4 mvMat;",
+"	uniform mat4 pMat;",
+"	void main()",
+"	{",
+"		gl_Position = pMat * mvMat * vec4(vertPos, 1.0);",
+"	}"].join("\n");
 
 
 //--------------------------------------------------------

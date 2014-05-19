@@ -32,7 +32,9 @@ function chufApp()
 			glContext.viewportWidth = canvas.width;
 			glContext.viewportHeight = canvas.height;
 			glContext.clearColor(0.0, 0.03, 0.07, 1.0);
-			glContext.enable(glContext.DEPTH_TEST);		
+			glContext.enable(glContext.DEPTH_TEST);
+			//TODO move cull options to multipass rendering
+			glContext.enable(glContext.CULL_FACE);
 		}
 		catch(e)
 		{
@@ -45,6 +47,7 @@ function chufApp()
 	{
 		var globeMesh = new Sphere(glContext, 2.5);
 		globeMesh.setShader(shaderResource.getShaderProgram(glContext, "phong"));
+		globeMesh.setDebugShader(shaderResource.getShaderProgram(glContext, "debug"), glContext);
 		
 		var globeNode = new scene.createNode();
 		globeNode.attachMesh(globeMesh);
