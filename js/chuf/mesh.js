@@ -10,12 +10,13 @@ function Mesh()
 
 	this.vertexData = 
 	{
-		positions : [],
-		UVs : [],
-		normals : [],
-		tangents : [],
+		positions  : [],
+		UVs        : [],
+		normals    : [],
+		tangents   : [],
 		bitangents : [],
-		indices : []
+		indices    : [],
+		positionIds: []   //vert's index and index of vert it clones position of
 	}
 
 	var debugBuffer = null;
@@ -112,7 +113,7 @@ function Mesh()
 		glContext.drawElements(glContext.TRIANGLES, this.indexBuffer.itemCount, glContext.UNSIGNED_SHORT, 0);
 
 		//for drawing normals in debug
-		var drawNormals = false;
+		var drawNormals = true;
 		if(drawNormals)
 		{
 			glContext.useProgram(debugShader.program);
@@ -130,7 +131,6 @@ function Mesh()
 
 			for(i = 0; i < this.vertexData.normals.length; i+=3)
 			{
-				//glContext.uniform4fv(colourLocation, red);
 				debugShader.setUniformVec4("colour", red);
 				var verts = [
 					this.vertexData.positions[i],
@@ -143,7 +143,7 @@ function Mesh()
 				];
 				glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(verts), glContext.DYNAMIC_DRAW);
 				glContext.drawArrays(glContext.LINES, 0, 2);
-
+/*
 				debugShader.setUniformVec4("colour", green);
 				verts = [
 					this.vertexData.positions[i],
@@ -168,7 +168,7 @@ function Mesh()
 					this.vertexData.positions[i + 2] + this.vertexData.bitangents[i + 2] * normalLength
 				];
 				glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(verts), glContext.DYNAMIC_DRAW);
-				glContext.drawArrays(glContext.LINES, 0, 2);
+				glContext.drawArrays(glContext.LINES, 0, 2);*/
 			}
 		}
 	}
@@ -262,7 +262,7 @@ function Mesh()
 				addVec3(currIndex, bitangents, bitangent);
 			}
 
-			//TODO sum and normalise normals of shared vertices
+			//TODO sum and normalise normals of duplicated vertices
 		}
 
 		//normalise all 3 arrays
@@ -344,8 +344,8 @@ function Mesh()
 //----sphere mesh type----//
 function Sphere(glContext, radius)
 {
-	var bandCount = 16;
-	var stripCount = 16;
+	var bandCount = 18; //these only work if they are both the same
+	var stripCount = 18;
 
 	var vertPosData = this.vertexData.positions;
 	var uvData = this.vertexData.UVs;
@@ -372,21 +372,29 @@ function Sphere(glContext, radius)
 			vertPosData.push(radius * y);
 			vertPosData.push(radius * z);
 
+			//console.log(x, y, z);
+
 			uvData.push(u);
 			uvData.push(v);
 		}
 	}
 
 	var indexData = this.vertexData.indices;
-	for(var band = 0; band < bandCount; ++band)
+	for(var band = 0; band < bandCount; band++)
 	{
-		for(var strip = 0; strip < stripCount; ++ strip)
+		for(var strip = 0; strip < stripCount; strip++)
 		{
 			var first = (band * (bandCount + 1)) + strip;
 			var second = first + bandCount + 1;
-			indexData.push(first);
+
+			//these should be wound *anti* clockwise
+			indexData.push(first);			
 			indexData.push(second);
 			indexData.push(first + 1);
+
+			//if last index added is (bandCount * (band + 1) + band)
+			//then it shares position with index - stripCount
+			//else if band is 0 or bandCount - 1 then all at top or bottom position
 
 			indexData.push(second);
 			indexData.push(second + 1);

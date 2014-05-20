@@ -35,6 +35,7 @@ function chufApp()
 			glContext.enable(glContext.DEPTH_TEST);
 			//TODO move cull options to multipass rendering
 			glContext.enable(glContext.CULL_FACE);
+			glContext.cullface(glContext.FRONT);
 		}
 		catch(e)
 		{
@@ -72,7 +73,7 @@ function chufApp()
 
 	var lastTime = new Date().getTime();
 	var fixedStep = 1.0 / 30.0;
-	function tick() //TODO figure out how timing works
+	function tick()
 	{
 		var now = new Date().getTime();
 		var frameTime = (now - lastTime) / 1000.0;
