@@ -143,8 +143,8 @@ function Mesh()
 				];
 				glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(verts), glContext.DYNAMIC_DRAW);
 				glContext.drawArrays(glContext.LINES, 0, 2);
-/*
-				debugShader.setUniformVec4("colour", green);
+
+				/*debugShader.setUniformVec4("colour", green);
 				verts = [
 					this.vertexData.positions[i],
 					this.vertexData.positions[i + 1],
@@ -261,9 +261,61 @@ function Mesh()
 				addVec3(currIndex, tangents, tangent);
 				addVec3(currIndex, bitangents, bitangent);
 			}
-
-			//TODO sum and normalise normals of duplicated vertices
 		}
+
+		//sum and normals of duplicated vertex positions
+		var dupIds = this.vertexData.positionIds;
+		var accumulatorN = [];
+		var accumulatorB = [];
+		var accumulatorT = [];
+		for(i = 0; i < dupIds.length; i++)
+		{
+			var exists = false;
+			for(j = 0; j < accumulatorN.length; ++j)
+			{
+				if(accumulatorN[j][0] === dupIds[i][0])
+				{
+					vec3.add(accumulatorN[j][1], getVec3(dupIds[i][1], normals), accumulatorN[j][1]);
+					vec3.add(accumulatorB[j][1], getVec3(dupIds[i][1], bitangents), accumulatorB[j][1]);
+					vec3.add(accumulatorT[j][1], getVec3(dupIds[i][1], tangents), accumulatorT[j][1]);
+					exists = true;
+					break;
+				}
+			}
+			if(!exists)
+			{
+				var sum = vec3.create();
+				vec3.add(getVec3(dupIds[i][0], normals), getVec3(dupIds[i][1], normals), sum);
+				accumulatorN.push([dupIds[i][0], sum]);
+
+				sum = vec3.create();
+				vec3.add(getVec3(dupIds[i][0], bitangents), getVec3(dupIds[i][1], bitangents), sum);
+				accumulatorB.push([dupIds[i][0], sum]);
+
+				sum = vec3.create();
+				vec3.add(getVec3(dupIds[i][0], tangents), getVec3(dupIds[i][1], tangents), sum);
+				accumulatorT.push([dupIds[i][0], sum]);
+			}
+
+		}
+		//set each to accumulated value
+		for(i = 0; i < dupIds.length; i++)
+		{
+			for(j = 0; j < accumulatorN.length; ++j)
+			{
+				setVec3(accumulatorN[j][0], normals, accumulatorN[j][1]);
+				setVec3(accumulatorB[j][0], bitangents, accumulatorB[j][1]);
+				setVec3(accumulatorT[j][0], tangents, accumulatorT[j][1]);
+				if(dupIds[i][0] === accumulatorN[j][0])
+				{
+					setVec3(dupIds[i][1], normals, accumulatorN[j][1]);
+					setVec3(dupIds[i][1], bitangents, accumulatorB[j][1]);
+					setVec3(dupIds[i][1], tangents, accumulatorT[j][1]);
+					break;
+				}
+			}
+		}
+
 
 		//normalise all 3 arrays
 		for(i = 0; i < this.positionBuffer.itemCount; i++)
@@ -344,8 +396,8 @@ function Mesh()
 //----sphere mesh type----//
 function Sphere(glContext, radius)
 {
-	var bandCount = 18; //these only work if they are both the same
-	var stripCount = 18;
+	var bandCount = 4; //these only work if they are both the same
+	var stripCount = 4;
 
 	var vertPosData = this.vertexData.positions;
 	var uvData = this.vertexData.UVs;
@@ -387,19 +439,28 @@ function Sphere(glContext, radius)
 			var first = (band * (bandCount + 1)) + strip;
 			var second = first + bandCount + 1;
 
+			var last = bandCount * (band + 1) + band;
+
 			//these should be wound *anti* clockwise
 			indexData.push(first);			
 			indexData.push(second);
 			indexData.push(first + 1);
 
-			//if last index added is (bandCount * (band + 1) + band)
-			//then it shares position with index - stripCount
-			//else if band is 0 or bandCount - 1 then all at top or bottom position
-
 			indexData.push(second);
 			indexData.push(second + 1);
 			indexData.push(first + 1);
+
+			//if last index added is (bandCount * (band + 1) + band)
+			//then it shares position with index - stripCount
+			if(band > 0 && ((first + 1) === last))
+				this.vertexData.positionIds.push([last, last - stripCount]);
 		}
+	}
+	//else if band is 0 or bandCount - 1 then all at top or bottom position
+	for(i = 1; i <=stripCount; ++i)
+	{
+		this.vertexData.positionIds.push([0, i]);
+		this.vertexData.positionIds.push([indexData.length - stripCount, indexData.length - (stripCount - i)]);
 	}
 
 	this.uvBuffer = glContext.createBuffer();
@@ -518,6 +579,12 @@ function Cube(glContext, length)
 		16, 17, 18,  16, 18, 19,
 		20, 21, 22,  20, 22, 23
 	];
+
+	//this.vertexData.positionIds.push([0, 13]);
+	//this.vertexData.positionIds.push([0, 23]);
+
+
+
 	glContext.bufferData(glContext.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), glContext.STATIC_DRAW);
 	this.indexBuffer.itemCount = indices.length;
 	this.indexBuffer.itemSize = 1;
