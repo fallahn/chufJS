@@ -46,7 +46,7 @@ function chufApp()
 
 	function loadScene()
 	{
-		var globeMesh = new Sphere(glContext, 2.5);
+		var globeMesh = new Cube(glContext, 2.5);
 		globeMesh.setShader(shaderResource.getShaderProgram(glContext, "normal"));
 		globeMesh.setDebugShader(shaderResource.getShaderProgram(glContext, "debug"), glContext);
 		
@@ -55,7 +55,7 @@ function chufApp()
 		globeNode.setPosition(0.0, 0.0, -7.0);
 		globeNode.update = function(dt, sceneNode)
 		{
-			sceneNode.rotate(0.0, 3.0 * dt, 0.0);
+			sceneNode.rotate(0.0, 4.0 * dt, 0.0);
 		}
 		globeNode.setTexture("colour", textureResource.getTexture(glContext, "img/earth_map/earth_colour.png"));
 		globeNode.setTexture("specular", textureResource.getTexture(glContext, "img/earth_map/earth_specular.png"));
