@@ -1,3 +1,10 @@
+var TextureType = Object.freeze
+({
+	DIFFUSE  : 0,
+	NORMAL   : 1,
+	SPECULAR : 2
+})
+
 function TextureResource()
 {
 	var textures = [];

@@ -164,13 +164,13 @@ function Scene()
 		{
 			switch(textureType)
 			{
-			case "colour":
+			case TextureType.DIFFUSE:
 				colourTexture = texture;
 				break;
-			case "normal":
+			case TextureType.NORMAL:
 				normalTexture = texture;
 				break;
-			case "specular":
+			case TextureType.SPECULAR:
 				specularTexture = texture;
 				break;
 			default: break;
@@ -201,15 +201,15 @@ function Scene()
 				//set textures maps if they exist
 				if(colourTexture)
 				{
-					mesh.setTexture("colour", colourTexture);
+					mesh.setTexture(TextureType.DIFFUSE, colourTexture);
 				}
 				if(normalTexture)
 				{
-					mesh.setTexture("normal", normalTexture);
+					mesh.setTexture(TextureType.NORMAL, normalTexture);
 				}
 				if(specularTexture)
 				{
-					mesh.setTexture("specular", specularTexture);
+					mesh.setTexture(TextureType.SPECULAR, specularTexture);
 				}
 				mesh.draw(glContext, matrices);
 			}

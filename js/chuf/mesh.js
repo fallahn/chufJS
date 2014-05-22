@@ -41,13 +41,13 @@ function Mesh()
 	{
 		switch(textureType)
 		{
-		case "colour":
+		case TextureType.DIFFUSE:
 			colourTexture = texture;
 			break;
-		case "normal":
+		case TextureType.NORMAL:
 			normalTexture = texture;
 			break;
-		case "specular":
+		case TextureType.SPECULAR:
 			specularTexture = texture;
 			break;
 		default: break;
@@ -70,8 +70,7 @@ function Mesh()
 		{
 			shaderProgram.setUniformTexture("normalMap", normalTexture);
 		}		
-		shaderProgram.bind(); //has to be called after setting textures but before other uniforms. This could be improved
-
+		
 		shaderProgram.setUniformMat4("mvMat", matrices.mvMatrix);
 		shaderProgram.setUniformMat4("pMat", matrices.pMatrix);
 		var nMatrix = mat3.create();
@@ -79,28 +78,24 @@ function Mesh()
 		mat3.transpose(nMatrix);
 		shaderProgram.setUniformMat3("nMat", nMatrix);
 
-		//bind shader attrib buffers
+		//bind shader attrib buffers - TODO check and warn if not exist
 		shaderProgram.bindAttribute("vertPos", this.positionBuffer);
-
-		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.uvBuffer);
-		glContext.vertexAttribPointer(shaderProgram.texCoordAttribute, this.uvBuffer.itemSize, glContext.FLOAT, false, 0, 0);
+		shaderProgram.bindAttribute("texCoord", this.uvBuffer);
 
 		if(this.normalBuffer)
 		{
-			glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
-			glContext.vertexAttribPointer(shaderProgram.vertexNormalAttribute, this.normalBuffer.itemSize, glContext.FLOAT, false, 0, 0);
-			
-			if(shaderProgram.shaderName === ShaderName.NORMAL)
+			shaderProgram.bindAttribute("vertNormal", this.normalBuffer);
+
+			if(shaderProgram.shaderName === ShaderName.NORMALMAP)
 			{
 				//bind normal tangents
-				glContext.bindBuffer(glContext.ARRAY_BUFFER, this.tanBuffer);
-				glContext.vertexAttribPointer(shaderProgram.vertexTanAttribute, this.tanBuffer.itemSize, glContext.FLOAT, false, 0, 0);
-				glContext.bindBuffer(glContext.ARRAY_BUFFER, this.bitanBuffer);
-				glContext.vertexAttribPointer(shaderProgram.vertexBitanAttribute, this.bitanBuffer.itemSize, glContext.FLOAT, false, 0, 0);
+				shaderProgram.bindAttribute("vertTan", this.tanBuffer);
+				shaderProgram.bindAttribute("vertBitan", this.bitanBuffer);
 			}
 		}
 
 		//bind element buffer and draw
+		shaderProgram.bind();
 		glContext.bindBuffer(glContext.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 		glContext.drawElements(glContext.TRIANGLES, this.indexBuffer.itemCount, glContext.UNSIGNED_SHORT, 0);
 
