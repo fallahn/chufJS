@@ -56,14 +56,29 @@ function Mesh()
 
 	this.draw = function(glContext, matrices)
 	{
-		glContext.useProgram(shaderProgram.program);
+		//check for textures and bind loaded
+		if(colourTexture)
+		{
+			shaderProgram.setUniformTexture("colourMap", colourTexture);
+		}
+		if(specularTexture)
+		{
+			shaderProgram.setUniformTexture("specularMap", specularTexture);
+		}
 
-		glContext.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, matrices.mvMatrix);
-		glContext.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, matrices.pMatrix);
+		if(normalTexture)
+		{
+			shaderProgram.setUniformTexture("normalMap", normalTexture);
+		}		
+
+		shaderProgram.bind();
+
+		shaderProgram.setUniformMat4("mvMat", matrices.mvMatrix);
+		shaderProgram.setUniformMat4("pMat", matrices.pMatrix);
 		var nMatrix = mat3.create();
 		mat4.toInverseMat3(matrices.mvMatrix, nMatrix);
 		mat3.transpose(nMatrix);
-		glContext.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, nMatrix);
+		shaderProgram.setUniformMat3("nMat", nMatrix);
 
 		//bind shader attrib buffers - TODO check which need to be bound for current shader
 		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.positionBuffer);
@@ -87,38 +102,19 @@ function Mesh()
 			}
 		}
 
-		//check for textures and bind loaded
-		if(colourTexture)
-		{
-			glContext.activeTexture(glContext.TEXTURE0);
-			colourTexture.bind();
-			glContext.uniform1i(shaderProgram.colourMapUniform, 0);
-		}
-		if(specularTexture)
-		{
-			glContext.activeTexture(glContext.TEXTURE1);
-			specularTexture.bind();
-			glContext.uniform1i(shaderProgram.specularMapUniform, 1);
-		}
 
-		if(normalTexture)
-		{
-			glContext.activeTexture(glContext.TEXTURE2);
-			normalTexture.bind();
-			glContext.uniform1i(shaderProgram.normalMapUniform, 2);
-		}
 
 		//bind element buffer and draw
 		glContext.bindBuffer(glContext.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 		glContext.drawElements(glContext.TRIANGLES, this.indexBuffer.itemCount, glContext.UNSIGNED_SHORT, 0);
 
 		//for drawing normals in debug
-		var drawNormals = true;
+		var drawNormals = false;
 		if(drawNormals)
 		{
-			glContext.useProgram(debugShader.program);
-			glContext.uniformMatrix4fv(debugShader.mvMatrixUniform, false, matrices.mvMatrix);
-			glContext.uniformMatrix4fv(debugShader.pMatrixUniform, false, matrices.pMatrix);
+			debugShader.bind();
+			debugShader.setUniformMat4("mvMat", matrices.mvMatrix);
+			debugShader.setUniformMat4("pMat", matrices.pMatrix);
 
 			glContext.bindBuffer(glContext.ARRAY_BUFFER, debugBuffer);
 			glContext.vertexAttribPointer(debugShader.vertexPosAttribute, 3, glContext.FLOAT, false, 0, 0);
@@ -129,9 +125,10 @@ function Mesh()
 
 			var normalLength = 0.2;	
 
+			debugShader.setUniformVec4("colour", red); //TODO can't set shader uniforms quickly enough
 			for(i = 0; i < this.vertexData.normals.length; i+=3)
 			{
-				debugShader.setUniformVec4("colour", red);
+				
 				var verts = [
 					this.vertexData.positions[i],
 					this.vertexData.positions[i + 1],
@@ -391,205 +388,3 @@ function Mesh()
 
 //TODO create a mesh resource so meshes can easily be attached to multiple nodes
 //and mesh ctor is encapsulated
-
-
-//----sphere mesh type----//
-function Sphere(glContext, radius)
-{
-	var bandCount = 4; //these only work if they are both the same
-	var stripCount = 4;
-
-	var vertPosData = this.vertexData.positions;
-	var uvData = this.vertexData.UVs;
-
-	for(var band = 0; band <= bandCount; band++)
-	{
-		var theta = band * Math.PI / bandCount;
-		var sinTheta = Math.sin(theta);
-		var cosTheta = Math.cos(theta);
-
-		for(var strip = 0; strip <= stripCount; strip++)
-		{
-			var phi = strip * 2 * Math.PI / stripCount;
-			var sinPhi = Math.sin(phi);
-			var cosPhi = Math.cos(phi);
-
-			var y = cosTheta;
-			var x = sinPhi * sinTheta;
-			var z = cosPhi * sinTheta;			
-			var u = (strip / stripCount) + 0.5;
-			var v = 1 - (band / bandCount);
-
-			vertPosData.push(radius * x);
-			vertPosData.push(radius * y);
-			vertPosData.push(radius * z);
-
-			//console.log(x, y, z);
-
-			uvData.push(u);
-			uvData.push(v);
-		}
-	}
-
-	var indexData = this.vertexData.indices;
-	for(var band = 0; band < bandCount; band++)
-	{
-		for(var strip = 0; strip < stripCount; strip++)
-		{
-			var first = (band * (bandCount + 1)) + strip;
-			var second = first + bandCount + 1;
-
-			var last = bandCount * (band + 1) + band;
-
-			//these should be wound *anti* clockwise
-			indexData.push(first);			
-			indexData.push(second);
-			indexData.push(first + 1);
-
-			indexData.push(second);
-			indexData.push(second + 1);
-			indexData.push(first + 1);
-
-			//if last index added is (bandCount * (band + 1) + band)
-			//then it shares position with index - stripCount
-			if(band > 0 && ((first + 1) === last))
-				this.vertexData.positionIds.push([last, last - stripCount]);
-		}
-	}
-	//else if band is 0 or bandCount - 1 then all at top or bottom position
-	for(i = 1; i <=stripCount; ++i)
-	{
-		this.vertexData.positionIds.push([0, i]);
-		this.vertexData.positionIds.push([indexData.length - stripCount, indexData.length - (stripCount - i)]);
-	}
-
-	this.uvBuffer = glContext.createBuffer();
-	glContext.bindBuffer(glContext.ARRAY_BUFFER, this.uvBuffer);
-	glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(uvData), glContext.STATIC_DRAW);
-	this.uvBuffer.itemSize = 2;
-	this.uvBuffer.itemCount = uvData.length / 2;
-
-	this.positionBuffer = glContext.createBuffer();
-	glContext.bindBuffer(glContext.ARRAY_BUFFER, this.positionBuffer);
-	glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(vertPosData), glContext.STATIC_DRAW);
-	this.positionBuffer.itemSize = 3;
-	this.positionBuffer.itemCount = vertPosData.length / 3;
-
-	this.indexBuffer = glContext.createBuffer();
-	glContext.bindBuffer(glContext.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-	glContext.bufferData(glContext.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexData), glContext.STATIC_DRAW);
-	this.indexBuffer.itemSize = 1;
-	this.indexBuffer.itemCount = indexData.length;
-
-	this.createNormals(glContext);
-}
-Sphere.prototype = new Mesh();
-
-
-//----cube mesh type----//
-function Cube(glContext, length)
-{
-	length /= 2; //origin about centre
-	this.positionBuffer = glContext.createBuffer();
-	glContext.bindBuffer(glContext.ARRAY_BUFFER, this.positionBuffer);
-	var verts = [
-		//f0
-		-length, -length,  length,
-		 length, -length,  length,
-		 length,  length,  length,
-		-length,  length,  length,
-		//f1
-		-length, -length, -length,
-		-length,  length, -length,
-		 length,  length, -length,
-		 length, -length, -length,
-		//f2
-		-length,  length, -length,
-		-length,  length,  length,
-		 length,  length,  length,
-		 length,  length, -length,
-		//f3
-		-length, -length, -length,
-		 length, -length, -length,
-		 length, -length,  length,
-		-length, -length,  length,
-		//f4
-		 length, -length, -length,
-		 length,  length, -length,
-		 length,  length,  length,
-		 length, -length,  length,
-		//f5
-		-length, -length, -length,
-		-length, -length,  length,
-		-length,  length,  length,
-		-length,  length, -length
-	];
-	glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(verts), glContext.STATIC_DRAW);
-	this.positionBuffer.itemSize = 3;
-	this.positionBuffer.itemCount = verts.length / 3;
-	this.vertexData.positions = verts;
-
-	//tex coords
-	this.uvBuffer = glContext.createBuffer();
-	glContext.bindBuffer(glContext.ARRAY_BUFFER, this.uvBuffer);
-	var uvCoords = [
-		//f0
-		0.0, 0.0,
-		1.0, 0.0,
-		1.0, 1.0,
-		0.0, 1.0,
-		//f1
-		1.0, 0.0,
-		1.0, 1.0,
-		0.0, 1.0,
-		0.0, 0.0,
-		//f2
-		0.0, 1.0,
-		0.0, 0.0,
-		1.0, 0.0,
-		1.0, 1.0,
-		//f3
-		1.0, 1.0,
-		0.0, 1.0,
-		0.0, 0.0,
-		1.0, 0.0,
-		//f4
-		1.0, 0.0,
-		1.0, 1.0,
-		0.0, 1.0,
-		0.0, 0.0,
-		//f5
-		0.0, 0.0,
-		1.0, 0.0,
-		1.0, 1.0,
-		0.0, 1.0
-	];
-	glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(uvCoords), glContext.STATIC_DRAW);
-	this.uvBuffer.itemSize = 2;
-	this.uvBuffer.itemCount = uvCoords.length / 2;
-	this.vertexData.UVs = uvCoords;
-
-	this.indexBuffer = glContext.createBuffer();
-	glContext.bindBuffer(glContext.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-	var indices = [
-		 0,  1,  2,   0,  2,  3,
-		 4,  5,  6,   4,  6,  7,
-		 8,  9, 10,   8, 10, 11,
-		12, 13, 14,  12, 14, 15,
-		16, 17, 18,  16, 18, 19,
-		20, 21, 22,  20, 22, 23
-	];
-
-	//this.vertexData.positionIds.push([0, 13]);
-	//this.vertexData.positionIds.push([0, 23]);
-
-
-
-	glContext.bufferData(glContext.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), glContext.STATIC_DRAW);
-	this.indexBuffer.itemCount = indices.length;
-	this.indexBuffer.itemSize = 1;
-	this.vertexData.indices = indices;
-
-	this.createNormals(glContext);
-}
-Cube.prototype = new Mesh();

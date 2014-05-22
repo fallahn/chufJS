@@ -4,6 +4,13 @@
 
 function ShaderResource()
 {
+	this.Type = Object.freeze
+	({
+		PHONG  : 0,
+		NORMAL : 1,
+		DEBUG  : 2
+	})
+
 	var shaders = [];
 
 	this.getShaderProgram = function(glContext, name)
@@ -36,43 +43,45 @@ function ShaderResource()
 			fragShader = getShader(glContext, debugFrag, "frag");
 			vertShader = getShader(glContext, debugVert, "vert");
 		break;
-		default: return null;
+		default:
+			console.log("unable to find shader of type " + name);
+		return null;
 		}
 		
-		newShader.program = glContext.createProgram();
-		glContext.attachShader(newShader.program, vertShader);
-		glContext.attachShader(newShader.program, fragShader);
-		glContext.linkProgram(newShader.program);
+		newShader.setProgram(glContext.createProgram());
+		glContext.attachShader(newShader.getProgram(), vertShader);
+		glContext.attachShader(newShader.getProgram(), fragShader);
+		glContext.linkProgram(newShader.getProgram());
 
-		if(!glContext.getProgramParameter(newShader.program, glContext.LINK_STATUS))
+		if(!glContext.getProgramParameter(newShader.getProgram(), glContext.LINK_STATUS))
 			alert("Failed to Link Shader Program");
 
 		//TODO refactor into own function for getting shader attribs, more flexible for custom shaders
-		newShader.vertexPosAttribute = glContext.getAttribLocation(newShader.program, "vertPos");
+		newShader.vertexPosAttribute = glContext.getAttribLocation(newShader.getProgram(), "vertPos");
 		glContext.enableVertexAttribArray(newShader.vertexPosAttribute);
 		
-		newShader.pMatrixUniform = glContext.getUniformLocation(newShader.program, "pMat");
-		newShader.mvMatrixUniform = glContext.getUniformLocation(newShader.program, "mvMat");
+		newShader.pMatrixUniform = glContext.getUniformLocation(newShader.getProgram(), "pMat");
+		newShader.mvMatrixUniform = glContext.getUniformLocation(newShader.getProgram(), "mvMat");
 
 		if(name != "debug")
 		{
-			newShader.texCoordAttribute = glContext.getAttribLocation(newShader.program, "texCoord");
+			newShader.texCoordAttribute = glContext.getAttribLocation(newShader.getProgram(), "texCoord");
 			glContext.enableVertexAttribArray(newShader.texCoordAttribute);
-			newShader.vertexNormalAttribute = glContext.getAttribLocation(newShader.program, "vertNormal");
+			newShader.vertexNormalAttribute = glContext.getAttribLocation(newShader.getProgram(), "vertNormal");
 			glContext.enableVertexAttribArray(newShader.vertexNormalAttribute);
 			
-			newShader.nMatrixUniform = glContext.getUniformLocation(newShader.program, "nMat");
-			newShader.colourMapUniform = glContext.getUniformLocation(newShader.program, "colourMap");
+			newShader.nMatrixUniform = glContext.getUniformLocation(newShader.getProgram(), "nMat");
+			newShader.colourMapUniform = glContext.getUniformLocation(newShader.getProgram(), "colourMap");
 
 			if(name === "normal")
 			{
-				newShader.vertexTanAttribute = glContext.getAttribLocation(newShader.program, "vertTan");
+				newShader.vertexTanAttribute = glContext.getAttribLocation(newShader.getProgram(), "vertTan");
 				glContext.enableVertexAttribArray(newShader.vertexTanAttribute);
-				newShader.vertexBitanAttribute = glContext.getAttribLocation(newShader.program, "vertBitan");
+				newShader.vertexBitanAttribute = glContext.getAttribLocation(newShader.getProgram(), "vertBitan");
 				glContext.enableVertexAttribArray(newShader.vertexBitanAttribute);
 
-				newShader.specularMapUniform = glContext.getUniformLocation(newShader.program, "specularMap");
-				newShader.normalMapUniform = glContext.getUniformLocation(newShader.program, "normalMap");
+				newShader.specularMapUniform = glContext.getUniformLocation(newShader.getProgram(), "specularMap");
+				newShader.normalMapUniform = glContext.getUniformLocation(newShader.getProgram(), "normalMap");
 			}
 		}
 
@@ -93,7 +102,11 @@ function ShaderResource()
 			{
 				shader = glContext.createShader(glContext.VERTEX_SHADER);
 			}
-			else return null;
+			else
+			{
+				console.log("failed to get shader of type " + type);
+				return null;
+			}
 
 			glContext.shaderSource(shader, str);
 			glContext.compileShader(shader);
@@ -112,11 +125,7 @@ function ShaderResource()
 	function ShaderProgram(name, glContext)
 	{
 		this.name                  = name;
-		this.program               = null;
 
-		this.pMatrixUniform        = null;
-		this.mvMatrixUniform       = null;
-		this.nMatrixUniform        = null;
 		this.colourMapUniform      = null;
 		this.normalMapUniform      = null;
 		this.specularMapUniform    = null;
@@ -126,38 +135,105 @@ function ShaderResource()
 		this.vertexNormalAttribute = null;
 		this.vertexTanAttribute    = null;
 		this.vertexBitanAttribute  = null;
+
+		var prog = null;
+		this.setProgram = function(program)
+		{
+			prog = program;
+		}
+		this.getProgram = function(program)
+		{
+			return prog;
+		}
 		
+		var uniformLocations = [];
+		function getUniformLocation(name)
+		{
+			//TODO need a faster find method
+			for(i = 0; i < uniformLocations.length; ++i)
+			{
+				if(uniformLocations[i][0] === name)
+					return uniformLocations[i][1];
+			}
+			var location = glContext.getUniformLocation(prog, name);
+			if(location)
+			{
+				uniformLocations.push([name, location]);
+				return location;
+			}
+			else
+			{
+				console.log(name + " not found in shader " + this.name);
+				return null;
+			}
+		}
 
 		this.setUniformVec2 = function(name, value)
 		{
-			glContext.uniform2fv(location, value);
+			var location = getUniformLocation(name);
+			if(location)
+				glContext.uniform2fv(location, value);
 		}
 
 		this.setUniformVec3 = function(name, value)
 		{
-			glContext.uniform3fv(location, value);
+			var location = getUniformLocation(name);
+			if(location)
+				glContext.uniform3fv(location, value);
 		}
 
 		this.setUniformVec4 = function(name, value)
 		{
-			//TODO cache locations to save some lookup processing
-			var location = glContext.getUniformLocation(this.program, name);
-			glContext.uniform4fv(location, value);
+			var location = getUniformLocation(name);
+			if(location)
+				glContext.uniform4fv(location, value);
 		}
 
 		this.setUniformMat3 = function(name, value)
 		{
-			glContext.uniformMatrix3fv(location, false, value);
+			var location = getUniformLocation(name);
+			if(location)
+				glContext.uniformMatrix3fv(location, false, value);
 		}
 
 		this.setUniformMat4 = function(name, value)
 		{
-			glContext.uniformMatrix4fv(location, false, value);
+			var location = getUniformLocation(name);
+			if(location)
+				glContext.uniformMatrix4fv(location, false, value);
 		}
 
+		var textures = [];
 		this.setUniformTexture = function(name, value)
 		{
-			//TODO track available texture ref ID
+			var location = getUniformLocation(name);
+			if(location) //TODO check available texture units
+			{
+				for(i = 0; i < textures.length; ++i)
+				{
+					if(textures[i][0] == location)
+					{
+						textures[i][1] = value;
+						return;
+					}
+				}
+				textures.push([location, value]);
+			}
+		}
+		function bindTextures()
+		{
+			for(i = 0; i < textures.length; ++i)
+			{
+				glContext.activeTexture(glContext.TEXTURE0 + i);
+				textures[i][1].bind();
+				glContext.uniform1i(textures[i][0], i);
+			}
+		}
+
+		this.bind = function()
+		{
+			glContext.useProgram(prog);
+			bindTextures();
 		}
 	}	
 }
