@@ -46,9 +46,9 @@ function chufApp()
 
 	function loadScene()
 	{
-		var globeMesh = new Cube(glContext, 2.5);
-		globeMesh.setShader(shaderResource.getShaderProgram(glContext, "normal"));
-		globeMesh.setDebugShader(shaderResource.getShaderProgram(glContext, "debug"), glContext);
+		var globeMesh = new Sphere(glContext, 2.5);
+		globeMesh.setShader(shaderResource.getShaderProgram(glContext, ShaderName.NORMAL));
+		globeMesh.setDebugShader(shaderResource.getShaderProgram(glContext, ShaderName.DEBUG), glContext);
 		
 		var globeNode = new scene.createNode();
 		globeNode.attachMesh(globeMesh);
