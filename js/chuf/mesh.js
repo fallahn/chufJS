@@ -56,7 +56,7 @@ function Mesh()
 
 	this.draw = function(glContext, matrices)
 	{
-		//check for textures and bind loaded
+		//set shader uniforms
 		if(colourTexture)
 		{
 			shaderProgram.setUniformTexture("colourMap", colourTexture);
@@ -70,8 +70,7 @@ function Mesh()
 		{
 			shaderProgram.setUniformTexture("normalMap", normalTexture);
 		}		
-
-		shaderProgram.bind();
+		shaderProgram.bind(); //has to be called after setting textures but before other uniforms. This could be improved
 
 		shaderProgram.setUniformMat4("mvMat", matrices.mvMatrix);
 		shaderProgram.setUniformMat4("pMat", matrices.pMatrix);
@@ -80,10 +79,9 @@ function Mesh()
 		mat3.transpose(nMatrix);
 		shaderProgram.setUniformMat3("nMat", nMatrix);
 
-		//bind shader attrib buffers - TODO check which need to be bound for current shader
-		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.positionBuffer);
-		glContext.vertexAttribPointer(shaderProgram.vertexPosAttribute, this.positionBuffer.itemSize, glContext.FLOAT, false, 0, 0);
-		
+		//bind shader attrib buffers
+		shaderProgram.bindAttribute("vertPos", this.positionBuffer);
+
 		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.uvBuffer);
 		glContext.vertexAttribPointer(shaderProgram.texCoordAttribute, this.uvBuffer.itemSize, glContext.FLOAT, false, 0, 0);
 
@@ -92,7 +90,7 @@ function Mesh()
 			glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
 			glContext.vertexAttribPointer(shaderProgram.vertexNormalAttribute, this.normalBuffer.itemSize, glContext.FLOAT, false, 0, 0);
 			
-			if(shaderProgram.name === "normal")
+			if(shaderProgram.shaderName === ShaderName.NORMAL)
 			{
 				//bind normal tangents
 				glContext.bindBuffer(glContext.ARRAY_BUFFER, this.tanBuffer);
@@ -101,8 +99,6 @@ function Mesh()
 				glContext.vertexAttribPointer(shaderProgram.vertexBitanAttribute, this.bitanBuffer.itemSize, glContext.FLOAT, false, 0, 0);
 			}
 		}
-
-
 
 		//bind element buffer and draw
 		glContext.bindBuffer(glContext.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
@@ -312,7 +308,6 @@ function Mesh()
 				}
 			}
 		}
-
 
 		//normalise all 3 arrays
 		for(i = 0; i < this.positionBuffer.itemCount; i++)
