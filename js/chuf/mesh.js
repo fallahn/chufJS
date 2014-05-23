@@ -1,380 +1,643 @@
-//-----base class for meshes-----//
-function Mesh()
+//TODO this file is huge, but javascript has no way of including external files by default.
+var MeshType = Object.freeze
+({
+	OBJ : 0,
+	MD2 : 1
+})
+
+
+function MeshResource()
 {
-	this.normalBuffer   = null;
-	this.tanBuffer      = null;
-	this.bitanBuffer    = null;
-	this.uvBuffer       = null;
-	this.positionBuffer = null;
-	this.indexBuffer    = null;
+	var meshes = [];
 
-	this.vertexData = 
+	this.loadMeshFromFile = function(path, type)
 	{
-		positions  : [],
-		UVs        : [],
-		normals    : [],
-		tangents   : [],
-		bitangents : [],
-		indices    : [],
-		positionIds: []   //vert's index and index of vert it clones position of
-	}
+		console.log("External mesh loaders are currently unimplemented");
 
-	var debugBuffer = null;
+		var mesh  = existingMesh(path);
+		if(mesh) return mesh;
 
-	var shaderProgram  = null;
-	this.setShader = function(shaderProg)
-	{
-		shaderProgram = shaderProg;
-	}
-
-	var debugShader = null;
-	this.setDebugShader = function(shaderProg, glContext)
-	{
-		debugShader = shaderProg;
-		debugBuffer = glContext.createBuffer();
-	}
-
-	var colourTexture = null;
-	var normalTexture = null;
-	var specularTexture = null;
-	this.setTexture = function(textureType, texture)
-	{
-		switch(textureType)
+		switch(type)
 		{
-		case TextureType.DIFFUSE:
-			colourTexture = texture;
+			case MeshType.OBJ:
 			break;
-		case TextureType.NORMAL:
-			normalTexture = texture;
+			case MeshTyp.MD2:
 			break;
-		case TextureType.SPECULAR:
-			specularTexture = texture;
-			break;
-		default: break;
+			default: break;
 		}
 	}
 
-	this.draw = function(glContext, matrices)
+	this.getSphere = function(glContext, diameter)
 	{
-		//set shader uniforms
-		if(colourTexture)
-		{
-			shaderProgram.setUniformTexture("colourMap", colourTexture);
-		}
-		if(specularTexture)
-		{
-			shaderProgram.setUniformTexture("specularMap", specularTexture);
-		}
+		var name = "sphere" + diameter.toString();
+		var mesh = existingMesh(name);
+		if(mesh) return mesh;
 
-		if(normalTexture)
+		mesh = new Sphere(glContext, diameter);
+		meshes.push([name, mesh]);
+		return mesh;
+	}
+
+	this.getCube = function(glContext, width)
+	{
+		var name = "cube" + width.toString();
+		var mesh = existingMesh(name);
+		if(mesh) return mesh;
+
+		mesh = new Cube(glContext, width);
+		meshes.push([name, mesh]);
+		return mesh;
+	}
+
+	function existingMesh(name)
+	{
+		for(i = 0; i < meshes.length; ++i)
 		{
-			shaderProgram.setUniformTexture("normalMap", normalTexture);
-		}		
-		
-		shaderProgram.setUniformMat4("mvMat", matrices.mvMatrix);
-		shaderProgram.setUniformMat4("pMat", matrices.pMatrix);
-		var nMatrix = mat3.create();
-		mat4.toInverseMat3(matrices.mvMatrix, nMatrix);
-		mat3.transpose(nMatrix);
-		shaderProgram.setUniformMat3("nMat", nMatrix);
-
-		//bind shader attrib buffers - TODO check and warn if not exist
-		shaderProgram.bindAttribute("vertPos", this.positionBuffer);
-		shaderProgram.bindAttribute("texCoord", this.uvBuffer);
-
-		if(this.normalBuffer)
-		{
-			shaderProgram.bindAttribute("vertNormal", this.normalBuffer);
-
-			if(shaderProgram.shaderName === ShaderName.NORMALMAP)
+			if(meshes[i][0] === name)
 			{
-				//bind normal tangents
-				shaderProgram.bindAttribute("vertTan", this.tanBuffer);
-				shaderProgram.bindAttribute("vertBitan", this.bitanBuffer);
+				return meshes[i][1];
+			}
+		}
+		return null;
+	}
+
+
+	//-----base class for meshes-----//
+	function Mesh()
+	{
+		this.normalBuffer   = null;
+		this.tanBuffer      = null;
+		this.bitanBuffer    = null;
+		this.uvBuffer       = null;
+		this.positionBuffer = null;
+		this.indexBuffer    = null;
+
+		this.vertexData = 
+		{
+			positions  : [],
+			UVs        : [],
+			normals    : [],
+			tangents   : [],
+			bitangents : [],
+			indices    : [],
+			positionIds: []   //vert's index and index of vert it clones position of
+		}
+
+		var debugBuffer = null;
+
+		var shaderProgram  = null;
+		this.setShader = function(shaderProg)
+		{
+			shaderProgram = shaderProg;
+		}
+
+		var debugShader = null;
+		this.setDebugShader = function(shaderProg, glContext)
+		{
+			debugShader = shaderProg;
+			debugBuffer = glContext.createBuffer();
+		}
+
+		var colourTexture = null;
+		var normalTexture = null;
+		var specularTexture = null;
+		this.setTexture = function(textureType, texture)
+		{
+			switch(textureType)
+			{
+			case TextureType.DIFFUSE:
+				colourTexture = texture;
+				break;
+			case TextureType.NORMAL:
+				normalTexture = texture;
+				break;
+			case TextureType.SPECULAR:
+				specularTexture = texture;
+				break;
+			default: break;
 			}
 		}
 
-		//bind element buffer and draw
-		shaderProgram.bind();
-		glContext.bindBuffer(glContext.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-		glContext.drawElements(glContext.TRIANGLES, this.indexBuffer.itemCount, glContext.UNSIGNED_SHORT, 0);
-
-		//for drawing normals in debug
-		var drawNormals = false;
-		if(drawNormals)
+		this.draw = function(glContext, matrices)
 		{
-			debugShader.bind();
-			debugShader.setUniformMat4("mvMat", matrices.mvMatrix);
-			debugShader.setUniformMat4("pMat", matrices.pMatrix);
-
-			glContext.bindBuffer(glContext.ARRAY_BUFFER, debugBuffer);
-			glContext.vertexAttribPointer(debugShader.vertexPosAttribute, 3, glContext.FLOAT, false, 0, 0);
-
-			var red = vec4.create([1.0, 0.0, 0.0, 1.0]);
-			var green = vec4.create([0.0, 1.0, 0.0, 1.0]);
-			var blue = vec4.create([0.0, 0.0, 1.0, 1.0]);
-
-			var normalLength = 0.2;	
-
-			debugShader.setUniformVec4("colour", red); //TODO can't set shader uniforms quickly enough
-			for(i = 0; i < this.vertexData.normals.length; i+=3)
+			//set shader uniforms
+			if(colourTexture)
 			{
-				
-				var verts = [
-					this.vertexData.positions[i],
-					this.vertexData.positions[i + 1],
-					this.vertexData.positions[i + 2],
-
-					this.vertexData.positions[i] + this.vertexData.normals[i] * normalLength,
-					this.vertexData.positions[i + 1] + this.vertexData.normals[i + 1] * normalLength,
-					this.vertexData.positions[i + 2] + this.vertexData.normals[i + 2] * normalLength
-				];
-				glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(verts), glContext.DYNAMIC_DRAW);
-				glContext.drawArrays(glContext.LINES, 0, 2);
-
-				/*debugShader.setUniformVec4("colour", green);
-				verts = [
-					this.vertexData.positions[i],
-					this.vertexData.positions[i + 1],
-					this.vertexData.positions[i + 2],
-
-					this.vertexData.positions[i] + this.vertexData.tangents[i] * normalLength,
-					this.vertexData.positions[i + 1] + this.vertexData.tangents[i + 1] * normalLength,
-					this.vertexData.positions[i + 2] + this.vertexData.tangents[i + 2] * normalLength
-				];
-				glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(verts), glContext.DYNAMIC_DRAW);
-				glContext.drawArrays(glContext.LINES, 0, 2);
-
-				debugShader.setUniformVec4("colour", blue);
-				verts = [
-					this.vertexData.positions[i],
-					this.vertexData.positions[i + 1],
-					this.vertexData.positions[i + 2],
-
-					this.vertexData.positions[i] + this.vertexData.bitangents[i] * normalLength,
-					this.vertexData.positions[i + 1] + this.vertexData.bitangents[i + 1] * normalLength,
-					this.vertexData.positions[i + 2] + this.vertexData.bitangents[i + 2] * normalLength
-				];
-				glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(verts), glContext.DYNAMIC_DRAW);
-				glContext.drawArrays(glContext.LINES, 0, 2);*/
+				shaderProgram.setUniformTexture("colourMap", colourTexture);
 			}
-		}
-	}
-
-	this.createNormals = function(glContext)
-	{								
-		if(!this.positionBuffer || !this.uvBuffer) return;
-
-		var positions = this.vertexData.positions;
-		var uvs = this.vertexData.UVs;
-		var indices = this.vertexData.indices;
-
-		var normals = this.vertexData.normals;
-		var tangents = this.vertexData.tangents;
-		var bitangents = this.vertexData.bitangents;
-
-		for(i = 0; i < positions.length; ++i)
-		{
-			normals.push(0.0);
-			tangents.push(0.0);
-			bitangents.push(0.0);
-		}
-
-		for(i = 0; i < indices.length; i += 3)
-		{
-			var face = 
+			if(specularTexture)
 			{
-				uv0 : vec2.create(),
-				uv1 : vec2.create(),
-				uv2 : vec2.create(),
-
-				p0 : vec3.create(),
-				p1 : vec3.create(),
-				p2 : vec3.create(),
-				normal : vec3.create()
+				shaderProgram.setUniformTexture("specularMap", specularTexture);
 			}
-			//calc face normal
-			face.p0 = getVec3(indices[i], positions);
-			face.p1 = getVec3(indices[i + 1], positions);
-			face.p2 = getVec3(indices[i + 2], positions);
 
-			var deltaPos1 = vec3.create();
-			var deltaPos2 = vec3.create();
-			vec3.subtract(face.p1, face.p0, deltaPos1);
-			vec3.subtract(face.p2, face.p0, deltaPos2);
-			vec3.cross(deltaPos1, deltaPos2, face.normal);
-
-			//calc normal tan/bitan
-			face.uv0 = getVec2(indices[i], uvs);
-			face.uv1 = getVec2(indices[i + 1], uvs);
-			face.uv2 = getVec2(indices[i + 2], uvs);
-
-			var deltaUV1 = vec2.create();
-			var deltaUV2 = vec2.create();
-			vec2.subtract(face.uv1, face.uv0, deltaUV1);
-			vec2.subtract(face.uv2, face.uv0, deltaUV2);
+			if(normalTexture)
+			{
+				shaderProgram.setUniformTexture("normalMap", normalTexture);
+			}		
 			
-			var temp1 = vec3.create();
-			vec3.scale(deltaPos1, deltaUV2[1], temp1);
-			var temp2 = vec3.create();
-			vec3.scale(deltaPos2, deltaUV1[1], temp2);
-			vec3.subtract(temp1, temp2, temp1);
+			shaderProgram.setUniformMat4("mvMat", matrices.mvMatrix);
+			shaderProgram.setUniformMat4("pMat", matrices.pMatrix);
+			var nMatrix = mat3.create();
+			mat4.toInverseMat3(matrices.mvMatrix, nMatrix);
+			mat3.transpose(nMatrix);
+			shaderProgram.setUniformMat3("nMat", nMatrix);
 
-			var r = 1.0 / (deltaUV1[0] * deltaUV2[1] - deltaUV1[1] * deltaUV2[0]);
-			var tangent = vec3.create();
-			vec3.scale(temp1, r, tangent);
+			//bind shader attrib buffers - TODO check and warn if not exist
+			shaderProgram.bindAttribute("vertPos", this.positionBuffer);
+			shaderProgram.bindAttribute("texCoord", this.uvBuffer);
 
-			vec3.scale(deltaPos2, deltaUV1[0], temp1);
-			vec3.scale(deltaPos1, deltaUV2[0], temp2);
-			vec3.subtract(temp1, temp2, temp1);
-
-			var bitangent = vec3.create();
-			vec3.scale(temp1, r, bitangent);
-
-			//calc weight and output normal vecs
-			var vertPositions = [face.p0, face.p1, face.p2];
-			for(j = 0; j < vertPositions.length; j++)
+			if(this.normalBuffer)
 			{
+				shaderProgram.bindAttribute("vertNormal", this.normalBuffer);
 
-				var a = vec3.create();
-				vec3.subtract(vertPositions[(j + 1) % 3], vertPositions[j], a);
-				var b = vec3.create();
-				vec3.subtract(vertPositions[(j + 2) % 3], vertPositions[j], b);
-				var weight = Math.acos(vec3.dot(a, b) / (vec3.length(a) * vec3.length(b)));
-
-				var newNormal = vec3.create();
-				vec3.scale(face.normal, weight, newNormal);
-				var currIndex = indices[i + j];
-				addVec3(currIndex, normals, newNormal);
-				addVec3(currIndex, tangents, tangent);
-				addVec3(currIndex, bitangents, bitangent);
-			}
-		}
-
-		//sum and normals of duplicated vertex positions
-		var dupIds = this.vertexData.positionIds;
-		var accumulatorN = [];
-		var accumulatorB = [];
-		var accumulatorT = [];
-		for(i = 0; i < dupIds.length; i++)
-		{
-			var exists = false;
-			for(j = 0; j < accumulatorN.length; ++j)
-			{
-				if(accumulatorN[j][0] === dupIds[i][0])
+				if(shaderProgram.shaderName === ShaderName.NORMALMAP)
 				{
-					vec3.add(accumulatorN[j][1], getVec3(dupIds[i][1], normals), accumulatorN[j][1]);
-					vec3.add(accumulatorB[j][1], getVec3(dupIds[i][1], bitangents), accumulatorB[j][1]);
-					vec3.add(accumulatorT[j][1], getVec3(dupIds[i][1], tangents), accumulatorT[j][1]);
-					exists = true;
-					break;
+					//bind normal tangents
+					shaderProgram.bindAttribute("vertTan", this.tanBuffer);
+					shaderProgram.bindAttribute("vertBitan", this.bitanBuffer);
 				}
 			}
-			if(!exists)
+
+			//bind element buffer and draw
+			shaderProgram.bind();
+			glContext.bindBuffer(glContext.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+			glContext.drawElements(glContext.TRIANGLES, this.indexBuffer.itemCount, glContext.UNSIGNED_SHORT, 0);
+
+			//for drawing normals in debug
+			var drawNormals = false;
+			if(drawNormals)
 			{
-				var sum = vec3.create();
-				vec3.add(getVec3(dupIds[i][0], normals), getVec3(dupIds[i][1], normals), sum);
-				accumulatorN.push([dupIds[i][0], sum]);
+				debugShader.bind();
+				debugShader.setUniformMat4("mvMat", matrices.mvMatrix);
+				debugShader.setUniformMat4("pMat", matrices.pMatrix);
 
-				sum = vec3.create();
-				vec3.add(getVec3(dupIds[i][0], bitangents), getVec3(dupIds[i][1], bitangents), sum);
-				accumulatorB.push([dupIds[i][0], sum]);
+				glContext.bindBuffer(glContext.ARRAY_BUFFER, debugBuffer);
+				glContext.vertexAttribPointer(debugShader.vertexPosAttribute, 3, glContext.FLOAT, false, 0, 0);
 
-				sum = vec3.create();
-				vec3.add(getVec3(dupIds[i][0], tangents), getVec3(dupIds[i][1], tangents), sum);
-				accumulatorT.push([dupIds[i][0], sum]);
-			}
+				var red = vec4.create([1.0, 0.0, 0.0, 1.0]);
+				var green = vec4.create([0.0, 1.0, 0.0, 1.0]);
+				var blue = vec4.create([0.0, 0.0, 1.0, 1.0]);
 
-		}
-		//set each to accumulated value
-		for(i = 0; i < dupIds.length; i++)
-		{
-			for(j = 0; j < accumulatorN.length; ++j)
-			{
-				setVec3(accumulatorN[j][0], normals, accumulatorN[j][1]);
-				setVec3(accumulatorB[j][0], bitangents, accumulatorB[j][1]);
-				setVec3(accumulatorT[j][0], tangents, accumulatorT[j][1]);
-				if(dupIds[i][0] === accumulatorN[j][0])
+				var normalLength = 0.2;	
+
+				for(i = 0; i < this.vertexData.normals.length; i+=3)
 				{
-					setVec3(dupIds[i][1], normals, accumulatorN[j][1]);
-					setVec3(dupIds[i][1], bitangents, accumulatorB[j][1]);
-					setVec3(dupIds[i][1], tangents, accumulatorT[j][1]);
-					break;
+					debugShader.setUniformVec4("colour", red); //TODO can't set shader uniforms quickly enough
+					var verts = [
+						this.vertexData.positions[i],
+						this.vertexData.positions[i + 1],
+						this.vertexData.positions[i + 2],
+
+						this.vertexData.positions[i] + this.vertexData.normals[i] * normalLength,
+						this.vertexData.positions[i + 1] + this.vertexData.normals[i + 1] * normalLength,
+						this.vertexData.positions[i + 2] + this.vertexData.normals[i + 2] * normalLength
+					];
+					glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(verts), glContext.DYNAMIC_DRAW);
+					glContext.drawArrays(glContext.LINES, 0, 2);
+
+					/*debugShader.setUniformVec4("colour", green);
+					verts = [
+						this.vertexData.positions[i],
+						this.vertexData.positions[i + 1],
+						this.vertexData.positions[i + 2],
+
+						this.vertexData.positions[i] + this.vertexData.tangents[i] * normalLength,
+						this.vertexData.positions[i + 1] + this.vertexData.tangents[i + 1] * normalLength,
+						this.vertexData.positions[i + 2] + this.vertexData.tangents[i + 2] * normalLength
+					];
+					glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(verts), glContext.DYNAMIC_DRAW);
+					glContext.drawArrays(glContext.LINES, 0, 2);
+
+					debugShader.setUniformVec4("colour", blue);
+					verts = [
+						this.vertexData.positions[i],
+						this.vertexData.positions[i + 1],
+						this.vertexData.positions[i + 2],
+
+						this.vertexData.positions[i] + this.vertexData.bitangents[i] * normalLength,
+						this.vertexData.positions[i + 1] + this.vertexData.bitangents[i + 1] * normalLength,
+						this.vertexData.positions[i + 2] + this.vertexData.bitangents[i + 2] * normalLength
+					];
+					glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(verts), glContext.DYNAMIC_DRAW);
+					glContext.drawArrays(glContext.LINES, 0, 2);*/
 				}
 			}
 		}
 
-		//normalise all 3 arrays
-		for(i = 0; i < this.positionBuffer.itemCount; i++)
-		{
-			var n = getVec3(i, normals);
-			vec3.normalize(n, n);
-			setVec3(i, normals, n);
-		
-			var t = getVec3(i, tangents);
-			vec3.normalize(t, t);
-			setVec3(i, tangents, t);
-		
-			var b = getVec3(i, bitangents);
-			vec3.normalize(b, b);
-			setVec3(i, bitangents, b);
+		this.createNormals = function(glContext)
+		{								
+			if(!this.positionBuffer || !this.uvBuffer) return;
+
+			var positions = this.vertexData.positions;
+			var uvs = this.vertexData.UVs;
+			var indices = this.vertexData.indices;
+
+			var normals = this.vertexData.normals;
+			var tangents = this.vertexData.tangents;
+			var bitangents = this.vertexData.bitangents;
+
+			for(i = 0; i < positions.length; ++i)
+			{
+				normals.push(0.0);
+				tangents.push(0.0);
+				bitangents.push(0.0);
+			}
+
+			for(i = 0; i < indices.length; i += 3)
+			{
+				var face = 
+				{
+					uv0 : vec2.create(),
+					uv1 : vec2.create(),
+					uv2 : vec2.create(),
+
+					p0 : vec3.create(),
+					p1 : vec3.create(),
+					p2 : vec3.create(),
+					normal : vec3.create()
+				}
+				//calc face normal
+				face.p0 = getVec3(indices[i], positions);
+				face.p1 = getVec3(indices[i + 1], positions);
+				face.p2 = getVec3(indices[i + 2], positions);
+
+				var deltaPos1 = vec3.create();
+				var deltaPos2 = vec3.create();
+				vec3.subtract(face.p1, face.p0, deltaPos1);
+				vec3.subtract(face.p2, face.p0, deltaPos2);
+				vec3.cross(deltaPos1, deltaPos2, face.normal);
+
+				//calc normal tan/bitan
+				face.uv0 = getVec2(indices[i], uvs);
+				face.uv1 = getVec2(indices[i + 1], uvs);
+				face.uv2 = getVec2(indices[i + 2], uvs);
+
+				var deltaUV1 = vec2.create();
+				var deltaUV2 = vec2.create();
+				vec2.subtract(face.uv1, face.uv0, deltaUV1);
+				vec2.subtract(face.uv2, face.uv0, deltaUV2);
+				
+				var temp1 = vec3.create();
+				vec3.scale(deltaPos1, deltaUV2[1], temp1);
+				var temp2 = vec3.create();
+				vec3.scale(deltaPos2, deltaUV1[1], temp2);
+				vec3.subtract(temp1, temp2, temp1);
+
+				var r = 1.0 / (deltaUV1[0] * deltaUV2[1] - deltaUV1[1] * deltaUV2[0]);
+				var tangent = vec3.create();
+				vec3.scale(temp1, r, tangent);
+
+				vec3.scale(deltaPos2, deltaUV1[0], temp1);
+				vec3.scale(deltaPos1, deltaUV2[0], temp2);
+				vec3.subtract(temp1, temp2, temp1);
+
+				var bitangent = vec3.create();
+				vec3.scale(temp1, r, bitangent);
+
+				//calc weight and output normal vecs
+				var vertPositions = [face.p0, face.p1, face.p2];
+				for(j = 0; j < vertPositions.length; j++)
+				{
+
+					var a = vec3.create();
+					vec3.subtract(vertPositions[(j + 1) % 3], vertPositions[j], a);
+					var b = vec3.create();
+					vec3.subtract(vertPositions[(j + 2) % 3], vertPositions[j], b);
+					var weight = Math.acos(vec3.dot(a, b) / (vec3.length(a) * vec3.length(b)));
+
+					var newNormal = vec3.create();
+					vec3.scale(face.normal, weight, newNormal);
+					var currIndex = indices[i + j];
+					addVec3(currIndex, normals, newNormal);
+					addVec3(currIndex, tangents, tangent);
+					addVec3(currIndex, bitangents, bitangent);
+				}
+			}
+
+			//sum and normals of duplicated vertex positions
+			var dupIds = this.vertexData.positionIds;
+			var accumulatorN = [];
+			var accumulatorB = [];
+			var accumulatorT = [];
+			for(i = 0; i < dupIds.length; i++)
+			{
+				var exists = false;
+				for(j = 0; j < accumulatorN.length; ++j)
+				{
+					if(accumulatorN[j][0] === dupIds[i][0])
+					{
+						vec3.add(accumulatorN[j][1], getVec3(dupIds[i][1], normals), accumulatorN[j][1]);
+						vec3.add(accumulatorB[j][1], getVec3(dupIds[i][1], bitangents), accumulatorB[j][1]);
+						vec3.add(accumulatorT[j][1], getVec3(dupIds[i][1], tangents), accumulatorT[j][1]);
+						exists = true;
+						break;
+					}
+				}
+				if(!exists)
+				{
+					var sum = vec3.create();
+					vec3.add(getVec3(dupIds[i][0], normals), getVec3(dupIds[i][1], normals), sum);
+					accumulatorN.push([dupIds[i][0], sum]);
+
+					sum = vec3.create();
+					vec3.add(getVec3(dupIds[i][0], bitangents), getVec3(dupIds[i][1], bitangents), sum);
+					accumulatorB.push([dupIds[i][0], sum]);
+
+					sum = vec3.create();
+					vec3.add(getVec3(dupIds[i][0], tangents), getVec3(dupIds[i][1], tangents), sum);
+					accumulatorT.push([dupIds[i][0], sum]);
+				}
+
+			}
+			//set each to accumulated value
+			for(i = 0; i < dupIds.length; i++)
+			{
+				for(j = 0; j < accumulatorN.length; ++j)
+				{
+					setVec3(accumulatorN[j][0], normals, accumulatorN[j][1]);
+					setVec3(accumulatorB[j][0], bitangents, accumulatorB[j][1]);
+					setVec3(accumulatorT[j][0], tangents, accumulatorT[j][1]);
+					if(dupIds[i][0] === accumulatorN[j][0])
+					{
+						setVec3(dupIds[i][1], normals, accumulatorN[j][1]);
+						setVec3(dupIds[i][1], bitangents, accumulatorB[j][1]);
+						setVec3(dupIds[i][1], tangents, accumulatorT[j][1]);
+						break;
+					}
+				}
+			}
+
+			//normalise all 3 arrays
+			for(i = 0; i < this.positionBuffer.itemCount; i++)
+			{
+				var n = getVec3(i, normals);
+				vec3.normalize(n, n);
+				setVec3(i, normals, n);
+			
+				var t = getVec3(i, tangents);
+				vec3.normalize(t, t);
+				setVec3(i, tangents, t);
+			
+				var b = getVec3(i, bitangents);
+				vec3.normalize(b, b);
+				setVec3(i, bitangents, b);
+			}
+
+			//create normal buffers
+			this.normalBuffer = glContext.createBuffer();
+			glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
+			glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(normals), glContext.STATIC_DRAW);
+			this.normalBuffer.itemSize = 3;
+			this.normalBuffer.itemCount = normals.length / 3;
+
+			this.tanBuffer = glContext.createBuffer();
+			glContext.bindBuffer(glContext.ARRAY_BUFFER, this.tanBuffer);
+			glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(tangents), glContext.STATIC_DRAW);
+			this.tanBuffer.itemSize = 3;
+			this.tanBuffer.itemCount = tangents.length / 3;
+
+			this.bitanBuffer = glContext.createBuffer();
+			glContext.bindBuffer(glContext.ARRAY_BUFFER, this.bitanBuffer);
+			glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(bitangents), glContext.STATIC_DRAW);
+			this.bitanBuffer.itemSize = 3;
+			this.bitanBuffer.itemCount = bitangents.length / 3;
 		}
 
-		//create normal buffers
-		this.normalBuffer = glContext.createBuffer();
-		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
-		glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(normals), glContext.STATIC_DRAW);
-		this.normalBuffer.itemSize = 3;
-		this.normalBuffer.itemCount = normals.length / 3;
+		function getVec2(index, array)
+		{
+			var offset = index * 2;
+			var vec = vec2.create();
+			vec[0] = array[offset];
+			vec[1] = array[offset + 1];
+			return vec;
+		}
 
-		this.tanBuffer = glContext.createBuffer();
-		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.tanBuffer);
-		glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(tangents), glContext.STATIC_DRAW);
-		this.tanBuffer.itemSize = 3;
-		this.tanBuffer.itemCount = tangents.length / 3;
+		function getVec3(index, array)
+		{
+			var offset = index * 3;
+			var vec = vec3.create();
+			vec[0] = array[offset];
+			vec[1] = array[offset + 1];
+			vec[2] = array[offset + 2];
+			return vec;
+		}
 
-		this.bitanBuffer = glContext.createBuffer();
-		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.bitanBuffer);
-		glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(bitangents), glContext.STATIC_DRAW);
-		this.bitanBuffer.itemSize = 3;
-		this.bitanBuffer.itemCount = bitangents.length / 3;
+		function addVec3(index, array, value)
+		{
+			var offset = index * 3;
+			array[offset] += value[0];
+			array[offset + 1] += value[1];
+			array[offset + 2] += value[2];
+		}
+
+		function setVec3(index, array, value)
+		{
+			var offset = index * 3;
+			array[offset] = value[0];
+			array[offset + 1] = value[1];
+			array[offset + 2] = value[2];
+		}
 	}
 
-	function getVec2(index, array)
+
+	//----sphere mesh type----//
+	function Sphere(glContext, radius)
 	{
-		var offset = index * 2;
-		var vec = vec2.create();
-		vec[0] = array[offset];
-		vec[1] = array[offset + 1];
-		return vec;
-	}
+		var bandCount = 14; //these only work if they are both the same
+		var stripCount = 14;
 
-	function getVec3(index, array)
-	{
-		var offset = index * 3;
-		var vec = vec3.create();
-		vec[0] = array[offset];
-		vec[1] = array[offset + 1];
-		vec[2] = array[offset + 2];
-		return vec;
-	}
+		var vertPosData = this.vertexData.positions;
+		var uvData = this.vertexData.UVs;
 
-	function addVec3(index, array, value)
-	{
-		var offset = index * 3;
-		array[offset] += value[0];
-		array[offset + 1] += value[1];
-		array[offset + 2] += value[2];
-	}
+		for(var band = 0; band <= bandCount; band++)
+		{
+			var theta = band * Math.PI / bandCount;
+			var sinTheta = Math.sin(theta);
+			var cosTheta = Math.cos(theta);
 
-	function setVec3(index, array, value)
-	{
-		var offset = index * 3;
-		array[offset] = value[0];
-		array[offset + 1] = value[1];
-		array[offset + 2] = value[2];
+			for(var strip = 0; strip <= stripCount; strip++)
+			{
+				var phi = strip * 2 * Math.PI / stripCount;
+				var sinPhi = Math.sin(phi);
+				var cosPhi = Math.cos(phi);
+
+				var y = cosTheta;
+				var x = sinPhi * sinTheta;
+				var z = cosPhi * sinTheta;			
+				var u = (strip / stripCount) + 0.5;
+				var v = 1 - (band / bandCount);
+
+				vertPosData.push(radius * x);
+				vertPosData.push(radius * y);
+				vertPosData.push(radius * z);
+
+				//console.log(x, y, z);
+
+				uvData.push(u);
+				uvData.push(v);
+			}
+		}
+
+		var indexData = this.vertexData.indices;
+		for(var band = 0; band < bandCount; band++)
+		{
+			for(var strip = 0; strip < stripCount; strip++)
+			{
+				var first = (band * (bandCount + 1)) + strip;
+				var second = first + bandCount + 1;
+
+				var last = bandCount * (band + 1) + band;
+
+				//these should be wound *anti* clockwise
+				indexData.push(first);			
+				indexData.push(second);
+				indexData.push(first + 1);
+
+				indexData.push(second);
+				indexData.push(second + 1);
+				indexData.push(first + 1);
+
+				//if last index added is (bandCount * (band + 1) + band)
+				//then it shares position with index - stripCount
+				if(band > 0 && ((first + 1) === last))
+					this.vertexData.positionIds.push([last, last - stripCount]);
+			}
+		}
+		//else if band is 0 or bandCount - 1 then all at top or bottom position
+		for(i = 1; i <=stripCount; ++i) //TODO this doesn't work correctly
+		{
+			this.vertexData.positionIds.push([0, i]);
+			this.vertexData.positionIds.push([indexData.length - stripCount, indexData.length - (stripCount - i)]);
+		}
+
+		this.uvBuffer = glContext.createBuffer();
+		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.uvBuffer);
+		glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(uvData), glContext.STATIC_DRAW);
+		this.uvBuffer.itemSize = 2;
+		this.uvBuffer.itemCount = uvData.length / 2;
+
+		this.positionBuffer = glContext.createBuffer();
+		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.positionBuffer);
+		glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(vertPosData), glContext.STATIC_DRAW);
+		this.positionBuffer.itemSize = 3;
+		this.positionBuffer.itemCount = vertPosData.length / 3;
+
+		this.indexBuffer = glContext.createBuffer();
+		glContext.bindBuffer(glContext.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+		glContext.bufferData(glContext.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexData), glContext.STATIC_DRAW);
+		this.indexBuffer.itemSize = 1;
+		this.indexBuffer.itemCount = indexData.length;
+
+		this.createNormals(glContext);
 	}
+	Sphere.prototype = new Mesh();
+
+
+	//----cube mesh type----//
+	function Cube(glContext, length)
+	{
+		length /= 2; //origin about centre
+		this.positionBuffer = glContext.createBuffer();
+		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.positionBuffer);
+		var verts = [
+			//f0
+			-length, -length,  length,
+			 length, -length,  length,
+			 length,  length,  length,
+			-length,  length,  length,
+			//f1
+			-length, -length, -length,
+			-length,  length, -length,
+			 length,  length, -length,
+			 length, -length, -length,
+			//f2
+			-length,  length, -length,
+			-length,  length,  length,
+			 length,  length,  length,
+			 length,  length, -length,
+			//f3
+			-length, -length, -length,
+			 length, -length, -length,
+			 length, -length,  length,
+			-length, -length,  length,
+			//f4
+			 length, -length, -length,
+			 length,  length, -length,
+			 length,  length,  length,
+			 length, -length,  length,
+			//f5
+			-length, -length, -length,
+			-length, -length,  length,
+			-length,  length,  length,
+			-length,  length, -length
+		];
+		glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(verts), glContext.STATIC_DRAW);
+		this.positionBuffer.itemSize = 3;
+		this.positionBuffer.itemCount = verts.length / 3;
+		this.vertexData.positions = verts;
+
+		//tex coords
+		this.uvBuffer = glContext.createBuffer();
+		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.uvBuffer);
+		var uvCoords = [
+			//f0
+			0.0, 0.0,
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0,
+			//f1
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0,
+			0.0, 0.0,
+			//f2
+			0.0, 1.0,
+			0.0, 0.0,
+			1.0, 0.0,
+			1.0, 1.0,
+			//f3
+			1.0, 1.0,
+			0.0, 1.0,
+			0.0, 0.0,
+			1.0, 0.0,
+			//f4
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0,
+			0.0, 0.0,
+			//f5
+			0.0, 0.0,
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0
+		];
+		glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(uvCoords), glContext.STATIC_DRAW);
+		this.uvBuffer.itemSize = 2;
+		this.uvBuffer.itemCount = uvCoords.length / 2;
+		this.vertexData.UVs = uvCoords;
+
+		this.indexBuffer = glContext.createBuffer();
+		glContext.bindBuffer(glContext.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+		var indices = [
+			 0,  1,  2,   0,  2,  3,
+			 4,  5,  6,   4,  6,  7,
+			 8,  9, 10,   8, 10, 11,
+			12, 13, 14,  12, 14, 15,
+			16, 17, 18,  16, 18, 19,
+			20, 21, 22,  20, 22, 23
+		];
+
+		//this.vertexData.positionIds.push([0, 13]);
+		//this.vertexData.positionIds.push([0, 23]);
+
+
+
+		glContext.bufferData(glContext.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), glContext.STATIC_DRAW);
+		this.indexBuffer.itemCount = indices.length;
+		this.indexBuffer.itemSize = 1;
+		this.vertexData.indices = indices;
+
+		this.createNormals(glContext);
+	}
+	Cube.prototype = new Mesh();
 }
-
-//TODO create a mesh resource so meshes can easily be attached to multiple nodes
-//and mesh ctor is encapsulated

@@ -13,6 +13,7 @@ function chufApp()
 	var glContext;
 	var shaderResource = new ShaderResource();
 	var textureResource = new TextureResource();
+	var meshResource = new MeshResource();
 	var scene = new Scene();
 
 	this.start = function(canvasId)
@@ -46,7 +47,7 @@ function chufApp()
 
 	function loadScene()
 	{
-		var globeMesh = new Sphere(glContext, 2.5);
+		var globeMesh = meshResource.getSphere(glContext, 2.5);
 		globeMesh.setShader(shaderResource.getShaderProgram(glContext, ShaderName.NORMALMAP));
 		globeMesh.setDebugShader(shaderResource.getShaderProgram(glContext, ShaderName.DEBUG), glContext);
 		
@@ -60,6 +61,17 @@ function chufApp()
 		globeNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(glContext, "img/earth_map/earth_colour.png"));
 		globeNode.setTexture(TextureType.SPECULAR, textureResource.getTexture(glContext, "img/earth_map/earth_specular.png"));
 		globeNode.setTexture(TextureType.NORMAL, textureResource.getTexture(glContext, "img/earth_map/earth_normal.png"));
+		
+		var cloudMesh = meshResource.getCube(glContext, 2.7);
+		cloudMesh.setShader(shaderResource.getShaderProgram(glContext, ShaderName.PHONG));
+
+		var cloudNode = scene.createNode();
+		cloudNode.attachMesh(cloudMesh);
+		cloudNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(glContext, "img/earth_map/cloud_colour.png"));
+		//cloudNode.setTexture(TextureType.NORMAL, textureResource.getTexture(glContext, "img/earth_map/cloud_normal.png"));
+		cloudNode.setPosition(0.0, 0.0, -7.0);
+
+		//scene.addChild(cloudNode);
 		scene.addChild(globeNode);
 	}
 

@@ -164,10 +164,10 @@ function ShaderResource()
 		var uniformLocations = [];
 		function getUniformLocation(name)
 		{
-			//TODO need a faster find method
+			//TODO need a faster find method - multiple looks cripples application
 			for(i = 0; i < uniformLocations.length; ++i)
 			{
-				if(uniformLocations[i][0] === name)
+				if(uniformLocations[i][0] == name)
 					return uniformLocations[i][1];
 			}
 			var location = glContext.getUniformLocation(program, name);

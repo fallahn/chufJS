@@ -25,12 +25,14 @@ function Scene()
 
 	this.draw = function(glContext)
 	{
-		mat4.identity(matrices.mvMatrix);
 		//TODO move pMatrix to camera and only update when necessary
 		mat4.perspective(45, glContext.viewportWidth / glContext.viewportHeight, 0.1, 100.0, matrices.pMatrix);		
 
 		for(i = 0; i < children.length; ++i)
+		{
+			mat4.identity(matrices.mvMatrix);
 			children[i].draw(glContext, matrices);
+		}
 	}
 
 	var children = [];
