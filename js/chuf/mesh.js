@@ -66,8 +66,6 @@ function MeshResource()
 	function Mesh()
 	{
 		this.normalBuffer   = null;
-		this.tanBuffer      = null;
-		this.bitanBuffer    = null;
 		this.uvBuffer       = null;
 		this.positionBuffer = null;
 		this.indexBuffer    = null;
@@ -119,30 +117,21 @@ function MeshResource()
 		this.draw = function(glContext, matrices)
 		{
 			//bind shader attrib buffers - TODO check and warn if not exist
-			shaderProgram.bindAttribute("vertPos", this.positionBuffer);
-			shaderProgram.bindAttribute("texCoord", this.uvBuffer);
-			//glContext.bindBuffer(glContext.ARRAY_BUFFER, this.positionBuffer);
-			//glContext.vertexAttribPointer(0, 3, glContext.FLOAT, false, 0, 0);
-			//glContext.bindBuffer(glContext.ARRAY_BUFFER, this.uvBuffer);
-			//glContext.vertexAttribPointer(1, this.uvBuffer.itemSize, glContext.FLOAT, false, 0,0);
+			glContext.bindBuffer(glContext.ARRAY_BUFFER, this.positionBuffer);
+			glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.VERTEX), this.positionBuffer.itemSize, glContext.FLOAT, false, 0, 0);
+			glContext.bindBuffer(glContext.ARRAY_BUFFER, this.uvBuffer);
+			glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TEXCOORD), this.uvBuffer.itemSize, glContext.FLOAT, false, 0,0);
 
 			if(this.normalBuffer)
 			{
-				shaderProgram.bindAttribute("vertNormal", this.normalBuffer);
-				//glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
-				//glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.NORMAL), this.normalBuffer.itemSize, glContext.FLOAT, false, 36, 0);
+				glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
+				glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.NORMAL), this.normalBuffer.itemSize, glContext.FLOAT, false, 36, 0);
 
 				if(shaderProgram.shaderName === ShaderName.NORMALMAP)
 				{
 					//bind normal tangents
-					shaderProgram.bindAttribute("vertTan", this.tanBuffer);
-					shaderProgram.bindAttribute("vertBitan", this.bitanBuffer);
-					//glContext.bindBuffer(glContext.ARRAY_BUFFER, this.tanBuffer);
-					//glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TANGENT), this.tanBuffer.itemSize, glContext.FLOAT, false, 0, 0);
-					//glContext.bindBuffer(glContext.ARRAY_BUFFER, this.bitanBuffer);
-					//glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.BITANGENT), this.bitanBuffer.itemSize, glContext.FLOAT, false, 0, 0);
-					//glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TANGENT), this.normalBuffer.itemSize, glContext.FLOAT, false, 36, 12);
-					//glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.BITANGENT), this.normalBuffer.itemSize, glContext.FLOAT, false, 36, 24);
+					glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TANGENT), this.normalBuffer.itemSize, glContext.FLOAT, false, 36, 12);
+					glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.BITANGENT), this.normalBuffer.itemSize, glContext.FLOAT, false, 36, 24);
 				}
 			}			
 
@@ -366,26 +355,14 @@ function MeshResource()
 			}
 			this.normalBuffer = glContext.createBuffer();
 			glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
-			glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(normals), glContext.STATIC_DRAW);
+			glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(interleaved), glContext.STATIC_DRAW);
 			this.normalBuffer.itemSize = 3;
 			this.normalBuffer.itemCount = normals.length / 3;
-
-			this.tanBuffer = glContext.createBuffer();
-			glContext.bindBuffer(glContext.ARRAY_BUFFER, this.tanBuffer);
-			glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(tangents), glContext.STATIC_DRAW);
-			this.tanBuffer.itemSize = 3;
-			this.tanBuffer.itemCount = tangents.length / 3;
-
-			this.bitanBuffer = glContext.createBuffer();
-			glContext.bindBuffer(glContext.ARRAY_BUFFER, this.bitanBuffer);
-			glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(bitangents), glContext.STATIC_DRAW);
-			this.bitanBuffer.itemSize = 3;
-			this.bitanBuffer.itemCount = bitangents.length / 3;
 
 			//buffer for drawing debug data
 			//pack position / colout for N, T and B repectively
 			var debugData = [];
-			var normalLength = 0.2;
+			var normalLength = 0.1;
 			var red = vec4.create([1.0, 0.0, 0.0, 1.0]);
 			var green = vec4.create([0.0, 1.0, 0.0, 1.0]);
 			var blue = vec4.create([0.0, 0.0, 1.0, 1.0]);
@@ -667,11 +644,6 @@ function MeshResource()
 			16, 17, 18,  16, 18, 19,
 			20, 21, 22,  20, 22, 23
 		];
-
-		//this.vertexData.positionIds.push([0, 13]);
-		//this.vertexData.positionIds.push([0, 23]);
-
-
 
 		glContext.bufferData(glContext.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), glContext.STATIC_DRAW);
 		this.indexBuffer.itemCount = indices.length;

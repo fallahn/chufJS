@@ -144,32 +144,39 @@ function ShaderResource()
 			{
 			case ShaderAttribute.VERTEX:
 				if(vertexPositionAttribute == null)
-					vertexPositionAttribute = glContext.getAttribLocation(program, "vertPos");
+					vertexPositionAttribute = fetchAttribute("vertPos");
 				return vertexPositionAttribute;
 			case ShaderAttribute.COLOUR:
 				if(vertexColourAttribute == null)
-					vertexColourAttribute = glContext.getAttribLocation(program, "vertColour");
+					vertexColourAttribute = fetchAttribute("vertColour");
 				return vertexColourAttribute;
 			case ShaderAttribute.TEXCOORD:
 				if(vertexTexCoordAttribute == null)
-					vertexTexCoordAttribute = glContext.getAttribLocation(program, "texCoord");
+					vertexTexCoordAttribute = fetchAttribute("texCoord");
 				return vertexTexCoordAttribute;
 			case ShaderAttribute.NORMAL:
 				if(vertexNormalAttribute == null)
-					vertexNormalAttribute = glContext.getAttribLocation(program, "vertNormal");
+					vertexNormalAttribute = fetchAttribute("vertNormal");
 				return vertexNormalAttribute;
 			case ShaderAttribute.TANGENT:
 				if(vertexTangentAttribute == null)
-					vertexTangentAttribute = glContext.getAttribLocation(program, "vertTan");
+					vertexTangentAttribute = fetchAttribute("vertTan");
 				return vertexTangentAttribute;
 			case ShaderAttribute.BITANGENT:
 				if(vertexBitangentAttribute == null)
-					vertexBitangentAttribute = glContext.getAttribLocation(program, "vertBitan");
+					vertexBitangentAttribute = fetchAttribute("vertBitan");
 				return vertexBitangentAttribute;
 			default:
 				console.log("WARNING: requested shader attribute not found");
 			return -1;
 			}
+		}
+		function fetchAttribute(name)
+		{
+			var attribute = glContext.getAttribLocation(program, name);
+			if(attribute != -1)
+				glContext.enableVertexAttribArray(attribute);
+			return attribute;
 		}
 
 		var program = null;
@@ -181,39 +188,6 @@ function ShaderResource()
 		{
 			return program;
 		}
-		
-		var attribLocations = [];
-		function getAttribLocation(name)
-		{
-			for(i = 0; i < attribLocations.length; ++i)
-			{
-				if(attribLocations[i][0] === name)
-					return attribLocations[i][1];
-			}
-			var location = glContext.getAttribLocation(program, name);
-			if(location != -1)
-			{
-				attribLocations.push([name, location]);
-				glContext.enableVertexAttribArray(location);
-				return location;
-			}
-			else
-			{
-				console.log(name + " attribute not found in shader");
-				return -1;
-			}
-		}
-		//TODO this assumes tightly packed / short stride. Need alternative for interleaved arrays
-		this.bindAttribute = function(attributeName, buffer)
-		{
-			var location = getAttribLocation(attributeName);
-			if(location != -1)
-			{
-				glContext.bindBuffer(glContext.ARRAY_BUFFER, buffer);
-				glContext.vertexAttribPointer(location, buffer.itemSize, glContext.FLOAT, false, 0, 0);
-			}
-		}
-
 
 		var pMatUniformLocation  = null;
 		var mvMatUniformLocation = null;
