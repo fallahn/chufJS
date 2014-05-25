@@ -71,6 +71,7 @@ function MeshResource()
 		this.uvBuffer       = null;
 		this.positionBuffer = null;
 		this.indexBuffer    = null;
+		var debugBuffer     = null;	
 
 		this.vertexData = 
 		{
@@ -83,8 +84,6 @@ function MeshResource()
 			positionIds: []   //vert's index and index of vert it clones position of
 		}
 
-		var debugBuffer = null;
-
 		var shaderProgram  = null;
 		this.setShader = function(shaderProg)
 		{
@@ -95,7 +94,6 @@ function MeshResource()
 		this.setDebugShader = function(shaderProg, glContext)
 		{
 			debugShader = shaderProg;
-			debugBuffer = glContext.createBuffer();
 		}
 
 		var colourTexture = null;
@@ -120,107 +118,73 @@ function MeshResource()
 
 		this.draw = function(glContext, matrices)
 		{
-			//set shader uniforms
-			if(colourTexture)
-			{
-				shaderProgram.setUniformTexture("colourMap", colourTexture);
-			}
-			if(specularTexture)
-			{
-				shaderProgram.setUniformTexture("specularMap", specularTexture);
-			}
-
-			if(normalTexture)
-			{
-				shaderProgram.setUniformTexture("normalMap", normalTexture);
-			}		
-			
-			shaderProgram.setUniformMat4("mvMat", matrices.mvMatrix);
-			shaderProgram.setUniformMat4("pMat", matrices.pMatrix);
-			var nMatrix = mat3.create();
-			mat4.toInverseMat3(matrices.mvMatrix, nMatrix);
-			mat3.transpose(nMatrix);
-			shaderProgram.setUniformMat3("nMat", nMatrix);
-
 			//bind shader attrib buffers - TODO check and warn if not exist
 			shaderProgram.bindAttribute("vertPos", this.positionBuffer);
 			shaderProgram.bindAttribute("texCoord", this.uvBuffer);
+			//glContext.bindBuffer(glContext.ARRAY_BUFFER, this.positionBuffer);
+			//glContext.vertexAttribPointer(0, 3, glContext.FLOAT, false, 0, 0);
+			//glContext.bindBuffer(glContext.ARRAY_BUFFER, this.uvBuffer);
+			//glContext.vertexAttribPointer(1, this.uvBuffer.itemSize, glContext.FLOAT, false, 0,0);
 
 			if(this.normalBuffer)
 			{
 				shaderProgram.bindAttribute("vertNormal", this.normalBuffer);
+				//glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
+				//glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.NORMAL), this.normalBuffer.itemSize, glContext.FLOAT, false, 36, 0);
 
 				if(shaderProgram.shaderName === ShaderName.NORMALMAP)
 				{
 					//bind normal tangents
 					shaderProgram.bindAttribute("vertTan", this.tanBuffer);
 					shaderProgram.bindAttribute("vertBitan", this.bitanBuffer);
+					//glContext.bindBuffer(glContext.ARRAY_BUFFER, this.tanBuffer);
+					//glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TANGENT), this.tanBuffer.itemSize, glContext.FLOAT, false, 0, 0);
+					//glContext.bindBuffer(glContext.ARRAY_BUFFER, this.bitanBuffer);
+					//glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.BITANGENT), this.bitanBuffer.itemSize, glContext.FLOAT, false, 0, 0);
+					//glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TANGENT), this.normalBuffer.itemSize, glContext.FLOAT, false, 36, 12);
+					//glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.BITANGENT), this.normalBuffer.itemSize, glContext.FLOAT, false, 36, 24);
 				}
+			}			
+
+			//set shader uniforms
+			if(colourTexture)
+			{
+				shaderProgram.setUniformTexture(ShaderUniform.COLOURMAP, colourTexture);
+			}
+			if(specularTexture)
+			{
+				shaderProgram.setUniformTexture(ShaderUniform.SPECULARMAP, specularTexture);
 			}
 
+			if(normalTexture)
+			{
+				shaderProgram.setUniformTexture(ShaderUniform.NORMALMAP, normalTexture);
+			}		
+			
+			shaderProgram.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
+			shaderProgram.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
+			var nMatrix = mat3.create();
+			mat4.toInverseMat3(matrices.mvMatrix, nMatrix);
+			mat3.transpose(nMatrix);
+			shaderProgram.setUniformMat3(ShaderUniform.NMAT, nMatrix);
+
 			//bind element buffer and draw
-			shaderProgram.bind();
+			shaderProgram.bind();			
 			glContext.bindBuffer(glContext.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 			glContext.drawElements(glContext.TRIANGLES, this.indexBuffer.itemCount, glContext.UNSIGNED_SHORT, 0);
 
 			//for drawing normals in debug
-			var drawNormals = false;
-			if(drawNormals)
+			var drawNormals = true;
+			if(drawNormals && debugShader)
 			{
 				debugShader.bind();
-				debugShader.setUniformMat4("mvMat", matrices.mvMatrix);
-				debugShader.setUniformMat4("pMat", matrices.pMatrix);
+				debugShader.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
+				debugShader.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
 
 				glContext.bindBuffer(glContext.ARRAY_BUFFER, debugBuffer);
-				glContext.vertexAttribPointer(debugShader.vertexPosAttribute, 3, glContext.FLOAT, false, 0, 0);
-
-				var red = vec4.create([1.0, 0.0, 0.0, 1.0]);
-				var green = vec4.create([0.0, 1.0, 0.0, 1.0]);
-				var blue = vec4.create([0.0, 0.0, 1.0, 1.0]);
-
-				var normalLength = 0.2;	
-
-				for(i = 0; i < this.vertexData.normals.length; i+=3)
-				{
-					debugShader.setUniformVec4("colour", red); //TODO can't set shader uniforms quickly enough
-					var verts = [
-						this.vertexData.positions[i],
-						this.vertexData.positions[i + 1],
-						this.vertexData.positions[i + 2],
-
-						this.vertexData.positions[i] + this.vertexData.normals[i] * normalLength,
-						this.vertexData.positions[i + 1] + this.vertexData.normals[i + 1] * normalLength,
-						this.vertexData.positions[i + 2] + this.vertexData.normals[i + 2] * normalLength
-					];
-					glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(verts), glContext.DYNAMIC_DRAW);
-					glContext.drawArrays(glContext.LINES, 0, 2);
-
-					/*debugShader.setUniformVec4("colour", green);
-					verts = [
-						this.vertexData.positions[i],
-						this.vertexData.positions[i + 1],
-						this.vertexData.positions[i + 2],
-
-						this.vertexData.positions[i] + this.vertexData.tangents[i] * normalLength,
-						this.vertexData.positions[i + 1] + this.vertexData.tangents[i + 1] * normalLength,
-						this.vertexData.positions[i + 2] + this.vertexData.tangents[i + 2] * normalLength
-					];
-					glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(verts), glContext.DYNAMIC_DRAW);
-					glContext.drawArrays(glContext.LINES, 0, 2);
-
-					debugShader.setUniformVec4("colour", blue);
-					verts = [
-						this.vertexData.positions[i],
-						this.vertexData.positions[i + 1],
-						this.vertexData.positions[i + 2],
-
-						this.vertexData.positions[i] + this.vertexData.bitangents[i] * normalLength,
-						this.vertexData.positions[i + 1] + this.vertexData.bitangents[i + 1] * normalLength,
-						this.vertexData.positions[i + 2] + this.vertexData.bitangents[i + 2] * normalLength
-					];
-					glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(verts), glContext.DYNAMIC_DRAW);
-					glContext.drawArrays(glContext.LINES, 0, 2);*/
-				}
+				glContext.vertexAttribPointer(debugShader.getAttribute(ShaderAttribute.VERTEX), 3, glContext.FLOAT, false, 28, 0);
+				glContext.vertexAttribPointer(debugShader.getAttribute(ShaderAttribute.COLOUR), 4, glContext.FLOAT, false, 28, 12);
+				glContext.drawArrays(glContext.LINES, 0, this.vertexData.indices.length);
 			}
 		}
 
@@ -384,6 +348,22 @@ function MeshResource()
 			}
 
 			//create normal buffers
+			//TODO interleave these values in single buffer
+			var interleaved = [];
+			for(i = 0; i < normals.length; i+=3)
+			{
+				interleaved.push(normals[i]);
+				interleaved.push(normals[i + 1]);
+				interleaved.push(normals[i + 2]);
+
+				interleaved.push(tangents[i]);
+				interleaved.push(tangents[i + 1]);
+				interleaved.push(tangents[i + 2]);
+
+				interleaved.push(bitangents[i]);
+				interleaved.push(bitangents[i + 1]);
+				interleaved.push(bitangents[i + 2]);
+			}
 			this.normalBuffer = glContext.createBuffer();
 			glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
 			glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(normals), glContext.STATIC_DRAW);
@@ -401,6 +381,67 @@ function MeshResource()
 			glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(bitangents), glContext.STATIC_DRAW);
 			this.bitanBuffer.itemSize = 3;
 			this.bitanBuffer.itemCount = bitangents.length / 3;
+
+			//buffer for drawing debug data
+			//pack position / colout for N, T and B repectively
+			var debugData = [];
+			var normalLength = 0.2;
+			var red = vec4.create([1.0, 0.0, 0.0, 1.0]);
+			var green = vec4.create([0.0, 1.0, 0.0, 1.0]);
+			var blue = vec4.create([0.0, 0.0, 1.0, 1.0]);
+			for(i = 0; i < positions.length; i+=3)
+			{
+				debugData.push(positions[i]);
+				debugData.push(positions[i + 1]);
+				debugData.push(positions[i + 2]);
+				debugData.push(red[0]);
+				debugData.push(red[1]);
+				debugData.push(red[2]);
+				debugData.push(red[3]);
+
+				debugData.push(positions[i] + normals[i] * normalLength);
+				debugData.push(positions[i + 1] + normals[i + 1] * normalLength);
+				debugData.push(positions[i + 2] + normals[i + 2] * normalLength);
+				debugData.push(red[0]);
+				debugData.push(red[1]);
+				debugData.push(red[2]);
+				debugData.push(red[3]);				
+
+				debugData.push(positions[i]);
+				debugData.push(positions[i + 1]);
+				debugData.push(positions[i + 2]);
+				debugData.push(green[0]);
+				debugData.push(green[1]);
+				debugData.push(green[2]);
+				debugData.push(green[3]);
+
+				debugData.push(positions[i] + tangents[i] * normalLength);
+				debugData.push(positions[i + 1] + tangents[i + 1] * normalLength);
+				debugData.push(positions[i + 2] + tangents[i + 2] * normalLength);
+				debugData.push(green[0]);
+				debugData.push(green[1]);
+				debugData.push(green[2]);
+				debugData.push(green[3]);				
+
+				debugData.push(positions[i]);
+				debugData.push(positions[i + 1]);
+				debugData.push(positions[i + 2]);
+				debugData.push(blue[0]);
+				debugData.push(blue[1]);
+				debugData.push(blue[2]);
+				debugData.push(blue[3]);
+
+				debugData.push(positions[i] + bitangents[i] * normalLength);
+				debugData.push(positions[i + 1] + bitangents[i + 1] * normalLength);
+				debugData.push(positions[i + 2] + bitangents[i + 2] * normalLength);
+				debugData.push(blue[0]);
+				debugData.push(blue[1]);
+				debugData.push(blue[2]);
+				debugData.push(blue[3]);	
+			}
+			debugBuffer = glContext.createBuffer();
+			glContext.bindBuffer(glContext.ARRAY_BUFFER, debugBuffer);
+			glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(debugData), glContext.STATIC_DRAW);
 		}
 
 		function getVec2(index, array)

@@ -63,13 +63,13 @@ function chufApp()
 		globeNode.setTexture(TextureType.NORMAL, textureResource.getTexture(glContext, "img/earth_map/earth_normal.png"));
 		
 		var cloudMesh = meshResource.getCube(glContext, 2.7);
-		cloudMesh.setShader(shaderResource.getShaderProgram(glContext, ShaderName.PHONG));
+		cloudMesh.setShader(shaderResource.getShaderProgram(glContext, ShaderName.NORMALMAP));
 
 		var cloudNode = scene.createNode();
 		cloudNode.attachMesh(cloudMesh);
 		cloudNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(glContext, "img/earth_map/cloud_colour.png"));
-		//cloudNode.setTexture(TextureType.NORMAL, textureResource.getTexture(glContext, "img/earth_map/cloud_normal.png"));
-		cloudNode.setPosition(0.0, 0.0, -7.0);
+		cloudNode.setTexture(TextureType.NORMAL, textureResource.getTexture(glContext, "img/earth_map/cloud_normal.png"));
+		cloudNode.setPosition(2.0, 0.0, -7.0);
 
 		//scene.addChild(cloudNode);
 		scene.addChild(globeNode);

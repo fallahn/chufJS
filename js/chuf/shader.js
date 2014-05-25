@@ -11,8 +11,8 @@ var ShaderName = Object.freeze
 
 var ShaderType = Object.freeze
 ({
-	VERTEX   : 0,
-	FRAGMENT : 1
+	VERTEX    : 0,
+	FRAGMENT  : 1
 })
 
 var ShaderAttribute = Object.freeze
@@ -21,7 +21,20 @@ var ShaderAttribute = Object.freeze
 	TEXCOORD  : 1,
 	NORMAL    : 2,
 	TANGENT   : 3,
-	BITANGENT : 4
+	BITANGENT : 4,
+	COLOUR    : 5
+})
+
+var ShaderUniform = Object.freeze
+({
+	//matrices
+	PMAT        : 0,
+	MVMAT       : 1,
+	NMAT        : 2,
+	//maps
+	COLOURMAP   : 3,
+	NORMALMAP   : 4,
+	SPECULARMAP : 5
 })
 
 function ShaderResource()
@@ -119,6 +132,46 @@ function ShaderResource()
 	{
 		this.shaderName = shaderName;
 
+		var vertexPositionAttribute  = null;
+		var vertexColourAttribute    = null;	
+		var vertexTexCoordAttribute  = null;
+		var vertexNormalAttribute    = null;
+		var vertexTangentAttribute   = null;
+		var vertexBitangentAttribute = null;	
+		this.getAttribute = function(name)
+		{
+			switch(name)
+			{
+			case ShaderAttribute.VERTEX:
+				if(vertexPositionAttribute == null)
+					vertexPositionAttribute = glContext.getAttribLocation(program, "vertPos");
+				return vertexPositionAttribute;
+			case ShaderAttribute.COLOUR:
+				if(vertexColourAttribute == null)
+					vertexColourAttribute = glContext.getAttribLocation(program, "vertColour");
+				return vertexColourAttribute;
+			case ShaderAttribute.TEXCOORD:
+				if(vertexTexCoordAttribute == null)
+					vertexTexCoordAttribute = glContext.getAttribLocation(program, "texCoord");
+				return vertexTexCoordAttribute;
+			case ShaderAttribute.NORMAL:
+				if(vertexNormalAttribute == null)
+					vertexNormalAttribute = glContext.getAttribLocation(program, "vertNormal");
+				return vertexNormalAttribute;
+			case ShaderAttribute.TANGENT:
+				if(vertexTangentAttribute == null)
+					vertexTangentAttribute = glContext.getAttribLocation(program, "vertTan");
+				return vertexTangentAttribute;
+			case ShaderAttribute.BITANGENT:
+				if(vertexBitangentAttribute == null)
+					vertexBitangentAttribute = glContext.getAttribLocation(program, "vertBitan");
+				return vertexBitangentAttribute;
+			default:
+				console.log("WARNING: requested shader attribute not found");
+			return -1;
+			}
+		}
+
 		var program = null;
 		this.setProgram = function(prog)
 		{
@@ -161,25 +214,44 @@ function ShaderResource()
 			}
 		}
 
-		var uniformLocations = [];
+
+		var pMatUniformLocation  = null;
+		var mvMatUniformLocation = null;
+		var nMatUniformLocation  = null;
+		var colourmapUniformLocation   = null;
+		var normalmapUniformLocation   = null;
+		var specularmapUniformLocation = null;
 		function getUniformLocation(name)
 		{
-			//TODO need a faster find method - multiple looks cripples application
-			for(i = 0; i < uniformLocations.length; ++i)
+			switch(name)
 			{
-				if(uniformLocations[i][0] == name)
-					return uniformLocations[i][1];
-			}
-			var location = glContext.getUniformLocation(program, name);
-			if(location != -1)
-			{
-				uniformLocations.push([name, location]);
-				return location;
-			}
-			else
-			{
-				console.log(name + " uniform not found in shader " + this.name);
-				return -1;
+			case ShaderUniform.PMAT:
+				if(pMatUniformLocation == null)
+					pMatUniformLocation = glContext.getUniformLocation(program, "pMat");
+			return pMatUniformLocation;
+			case ShaderUniform.MVMAT:
+				if(mvMatUniformLocation == null)
+					mvMatUniformLocation = glContext.getUniformLocation(program, "mvMat");
+			return mvMatUniformLocation;
+			case ShaderUniform.NMAT:
+				if(nMatUniformLocation == null)
+					nMatUniformLocation = glContext.getUniformLocation(program, "nMat");
+			return nMatUniformLocation;
+			case ShaderUniform.COLOURMAP:
+				if(colourmapUniformLocation == null)
+					colourmapUniformLocation = glContext.getUniformLocation(program, "colourMap");
+			return colourmapUniformLocation;
+			case ShaderUniform.NORMALMAP:
+				if(normalmapUniformLocation == null)
+					normalmapUniformLocation = glContext.getUniformLocation(program, "normalMap");
+			return normalmapUniformLocation;
+			case ShaderUniform.SPECULARMAP:
+				if(specularmapUniformLocation == null)
+					specularmapUniformLocation = glContext.getUniformLocation(program, "specularMap");
+			return specularmapUniformLocation;
+			default:
+				console.log("unable to find shader uniform");
+			return -1;
 			}
 		}
 
@@ -268,24 +340,27 @@ function ShaderResource()
 //--------------------------------------------------------
 var debugFrag = [
 "	precision mediump float;",
-"	uniform vec4 colour;",
+"	varying vec4 vColour;",
 "	void main()",
 "	{",
-"		gl_FragColor = colour;",
+"		gl_FragColor = vColour;",
 "	}"].join("\n");
 
 var debugVert = [
 "	attribute vec3 vertPos;",
+"	attribute vec4 vertColour;",
+"	varying vec4 vColour;",
 "	uniform mat4 mvMat;",
 "	uniform mat4 pMat;",
 "	void main()",
 "	{",
 "		gl_Position = pMat * mvMat * vec4(vertPos, 1.0);",
+"		vColour = vertColour;",
 "	}"].join("\n");
 
 
 //--------------------------------------------------------
-var phongFrag = [ //TODO finish this
+var phongFrag = [
 "	precision mediump float;",
 "	varying vec2 vTexCoord;",
 "	varying vec3 vNormal;",
@@ -338,7 +413,7 @@ var phongVert = [
 
 //---------------------------------------------------------
 
-var normalFrag = [//TODO make this actually a normal shader
+var normalFrag = [
 "	precision mediump float;",
 "	varying vec2 vTexCoord;",
 "	varying vec3 vLightVec;",
