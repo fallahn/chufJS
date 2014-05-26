@@ -70,87 +70,64 @@ function Scene()
 			mesh = meshComponent;
 		}
 
-		var rotation =
-		{
-			x : 0.0,
-			y : 0.0,
-			z : 0.0
-		}
-
-		var position = 
-		{
-			x : 0.0,
-			y : 0.0,
-			z : 0.0		
-		}
-
-		var scale = 
-		{
-			x : 1.0,
-			y : 1.0,
-			z : 1.0		
-		}
-
-		var origin = 
-		{
-			x : 0.0,
-			y : 0.0,
-			z : 0.0
-		}
+		var rotation = vec3.create();
+		var position = vec3.create();
+		var scale    = vec3.create([1.0, 1.0, 1.0]);
+		var origin   = vec3.create();
 
 		this.setRotation = function(x, y, z)
 		{
-			rotation.x = toRad(x);
-			rotation.y = toRad(y);
-			rotation.z = toRad(z);
+			rotation[0] = toRad(x);
+			rotation[1] = toRad(y);
+			rotation[2]= toRad(z);
 			updateMatrix = true;
 		}
 
 		this.rotate = function(x, y, z)
 		{
-			rotation.x += toRad(x);
-			rotation.y += toRad(y);
-			rotation.z += toRad(z);
+			rotation[0] += toRad(x);
+			rotation[1] += toRad(y);
+			rotation[2] += toRad(z);
 			updateMatrix = true;
 		}
 
 		this.setPosition = function(x, y, z)
 		{
-			position.x = x;
-			position.y = y;
-			position.z = z;
+			position[0] = x;
+			position[1] = y;
+			position[2] = z;
 			updateMatrix = true;
 		}
 
 		this.move = function(x, y, z)
 		{
-			position.x += x;
-			position.y += y;
-			position.z += z;
+			position[0] += x;
+			position[1] += y;
+			position[2] += z;
 			updateMatrix = true;
 		}
 
 		this.setScale = function(x, y, z)
 		{
-			scale.x = x;
-			scale.y = y;
-			scale.z = z;
+			scale[0] = x;
+			scale[1] = y;
+			scale[2] = z;
 			updateMatrix = true;
 		}
 
 		this.scale = function(x, y, z)
 		{
-			scale.x *= x;
-			scale.y *= y;
-			scale.z *= z;
+			scale[0] *= x;
+			scale[1] *= y;
+			scale[2] *= z;
 			updateMatrix = true;
 		}
 
 		this.setOrigin = function(x, y, z)
 		{
-			origin.x = x;
-			origin.y = y;
-			origin.z = z;
+			origin[0] = x;
+			origin[1] = y;
+			origin[2] = z;
 		}
 
 		this.update = function(dt, sceneNode)
@@ -187,12 +164,12 @@ function Scene()
 			if(updateMatrix)
 			{
 				mat4.identity(mvMatrix);
-				mat4.translate(mvMatrix, [position.x, position.y, position.z]);			
+				mat4.translate(mvMatrix, [position[0], position[1], position[2]]);			
 				//mat4.translate(mvMatrix, [-origin.x, -origin.y,-origin.z]);			
-				mat4.rotate(mvMatrix, rotation.y, [0, 1, 0]);
-				mat4.rotate(mvMatrix, rotation.z, [0, 0, 1]);
-				mat4.rotate(mvMatrix, rotation.x, [1, 0, 0]);
-				mat4.scale(mvMatrix, [scale.x, scale.y, scale.z]);
+				mat4.rotate(mvMatrix, rotation[1], [0, 1, 0]);
+				mat4.rotate(mvMatrix, rotation[2], [0, 0, 1]);
+				mat4.rotate(mvMatrix, rotation[0], [1, 0, 0]);
+				mat4.scale(mvMatrix, [scale[0], scale[1], scale[2]]);
 				updateMatrix = false;
 			}
 

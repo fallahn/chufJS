@@ -128,9 +128,9 @@ function ShaderResource()
 	}
 
 	//----------------------------------------
-	function ShaderProgram(shaderName, glContext)
+	function ShaderProgram(shadername, glContext)
 	{
-		this.shaderName = shaderName;
+		this.shaderName = shadername;
 
 		var vertexPositionAttribute  = null;
 		var vertexColourAttribute    = null;	

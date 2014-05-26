@@ -85,7 +85,10 @@ function MeshResource()
 		var shaderProgram  = null;
 		this.setShader = function(shaderProg)
 		{
+			if(shaderProgram)
+			console.log(shaderProgram.shaderName);
 			shaderProgram = shaderProg;
+			console.log(shaderProgram.shaderName);
 		}
 
 		var debugShader = null;
@@ -175,6 +178,8 @@ function MeshResource()
 				glContext.vertexAttribPointer(debugShader.getAttribute(ShaderAttribute.COLOUR), 4, glContext.FLOAT, false, 28, 12);
 				glContext.drawArrays(glContext.LINES, 0, this.vertexData.indices.length);
 			}
+
+			//console.log(shaderProgram.shaderName);
 		}
 
 		this.createNormals = function(glContext)
@@ -549,6 +554,7 @@ function MeshResource()
 		this.createNormals(glContext);
 	}
 	Sphere.prototype = new Mesh();
+	Sphere.prototype.constructor = Sphere;
 
 
 	//----cube mesh type----//
@@ -653,4 +659,5 @@ function MeshResource()
 		this.createNormals(glContext);
 	}
 	Cube.prototype = new Mesh();
+	Cube.prototype.constructor = Cube;
 }

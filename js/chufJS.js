@@ -37,6 +37,9 @@ function chufApp()
 			//TODO move cull options to multipass rendering
 			glContext.enable(glContext.CULL_FACE);
 			glContext.cullface(glContext.FRONT);
+			glContext.enable(glContext.BLEND);
+			glContext.blend_func(glContext.SRC_ALPHA, glContext.ONE);
+			glContext.blendEquation(glContext.FUNC_ADD);
 		}
 		catch(e)
 		{
@@ -47,7 +50,7 @@ function chufApp()
 
 	function loadScene()
 	{
-		var globeMesh = meshResource.getSphere(glContext, 1.5);
+		var globeMesh = meshResource.getSphere(glContext, 0.5);
 		globeMesh.setShader(shaderResource.getShaderProgram(glContext, ShaderName.NORMALMAP));
 		globeMesh.setDebugShader(shaderResource.getShaderProgram(glContext, ShaderName.DEBUG), glContext);
 		
@@ -62,14 +65,18 @@ function chufApp()
 		globeNode.setTexture(TextureType.SPECULAR, textureResource.getTexture(glContext, "img/earth_map/earth_specular.png"));
 		globeNode.setTexture(TextureType.NORMAL, textureResource.getTexture(glContext, "img/earth_map/earth_normal.png"));
 		
-		var cloudMesh = meshResource.getSphere(glContext, 2.7);
-		cloudMesh.setShader(shaderResource.getShaderProgram(glContext, ShaderName.PHONG));
-
+		var cloudMesh = meshResource.getSphere(glContext, 2.7); //this should be bigger than the globe - but it takes the same size???
+		cloudMesh.setShader(shaderResource.getShaderProgram(glContext, ShaderName.PHONG)); //for ome reason this sets the shader of existing meshes too??
+		//for above comment see console output of setShader function in mesh class
 		var cloudNode = scene.createNode();
 		cloudNode.attachMesh(cloudMesh);
+		//cloudNode.update = function(dt, sceneNode)
+		//{
+		//	sceneNode.rotate(0.0, 0.9 * dt, 0.0);
+		//}
 		cloudNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(glContext, "img/earth_map/cloud_colour.png"));
 		//cloudNode.setTexture(TextureType.NORMAL, textureResource.getTexture(glContext, "img/earth_map/cloud_normal.png"));
-		cloudNode.setPosition(2.0, 0.0, 0.0);
+		cloudNode.setPosition(0.01, 0.0, 0.0);
 
 		globeNode.addChild(cloudNode);
 		scene.addChild(globeNode);
