@@ -24,7 +24,7 @@ function Scene()
 	this.update = function(dt)
 	{
 		var deletedList = [];
-		for(i = 0; i < rootChildren.length; i++)
+		for(var i = 0; i < rootChildren.length; i++)
 		{
 			//update each
 			rootChildren[i].update(dt, rootChildren[i]);
@@ -33,7 +33,7 @@ function Scene()
 			if(rootChildren[i].deleted())
 				deletedList.push(i);
 		}
-		for(i = 0; i < deletedList.length; i++)
+		for(var i = 0; i < deletedList.length; i++)
 			rootChildren.splice(i, 1); //TODO potential optimisation if IDs are concurrent
 	}
 
@@ -42,10 +42,10 @@ function Scene()
 		//TODO move pMatrix to camera and only update when necessary
 		mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, rootMatrices.pMatrix);		
 
-		for(i = 0; i < rootChildren.length; i++)
+		for(var j = 0; j < rootChildren.length; j++)
 		{
 			mat4.identity(rootMatrices.mvMatrix);
-			rootChildren[i].draw(gl, rootMatrices);
+			rootChildren[j].draw(gl, rootMatrices);
 		}
 	}
 
@@ -148,8 +148,8 @@ function Scene()
 			}			
 
 			this.updateSelf(dt, sceneNode);
-			for(j = 0; j < children.length; j++)
-				children[j].update(dt, children[j]);
+			for(var k = 0; k < children.length; k++)
+				children[k].update(dt, children[k]);
 			
 		}
 
@@ -201,8 +201,8 @@ function Scene()
 				mesh.draw(gl, matrices);
 			}
 
-			for(j = 0; j < children.length; ++j)
-				children[j].draw(gl, matrices);
+			for(var l = 0; l < children.length; ++l)
+				children[l].draw(gl, matrices);
 		}
 
 		var isDeleted = false;

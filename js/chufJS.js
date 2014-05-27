@@ -65,33 +65,33 @@ function chufApp()
 		globeNode.setTexture(TextureType.SPECULAR, textureResource.getTexture(gl, "img/earth_map/earth_specular.png"));
 		globeNode.setTexture(TextureType.NORMAL, textureResource.getTexture(gl, "img/earth_map/earth_normal.png"));
 		
-		//var cloudMesh = meshResource.getSphere(gl, 0.4);
-		//cloudMesh.setShader(shaderResource.getShaderProgram(gl, ShaderName.PHONG));
-		//cloudMesh.setDebugShader(shaderResource.getShaderProgram(gl, ShaderName.DEBUG))
+		var cloudMesh = meshResource.getSphere(gl, 0.4);
+		cloudMesh.setShader(shaderResource.getShaderProgram(gl, ShaderName.PHONG));
+		cloudMesh.setDebugShader(shaderResource.getShaderProgram(gl, ShaderName.DEBUG))
 		var cloudNode = scene.createNode();
-		//cloudNode.attachMesh(cloudMesh);
-		//cloudNode.updateSelf = function(dt, sceneNode)
-		//{
-		//	sceneNode.rotate(0.0, -119.0 * dt, 0.0);
-		//}
-		//cloudNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(gl, "img/earth_map/cloud_colour.png"));
+		cloudNode.attachMesh(cloudMesh);
+		cloudNode.updateSelf = function(dt, sceneNode)
+		{
+			sceneNode.rotate(0.0, -119.0 * dt, 0.0);
+		}
+		cloudNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(gl, "img/earth_map/cloud_colour.png"));
 		//cloudNode.setTexture(TextureType.NORMAL, textureResource.getTexture(gl, "img/earth_map/cloud_normal.png"));
-		cloudNode.setPosition(0.0, 0.0, 3.0);
+		cloudNode.setPosition(2.2, 0.0, -7.0);
 
 		//var cubeMesh = meshResource.getCube(gl, 0.2);
 		//cubeMesh.setShader(shaderResource.getShaderProgram(gl, ShaderName.PHONG));
 		var cubeNode = scene.createNode();
-		//cubeNode.attachMesh(cloudMesh);
+		cubeNode.attachMesh(cloudMesh);
 		cubeNode.setScale(0.5, 0.5, 0.5);
-		//cubeNode.updateSelf = function(dt, sceneNode)
-		//{
-		//	sceneNode.rotate(50.0 * dt, 0.0, 0.0);
-		//}
-		//cubeNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(gl, "img/earth_map/cloud_normal.png"));
-		cubeNode.setPosition(0.0, -0.9, 0.0);
+		cubeNode.updateSelf = function(dt, sceneNode)
+		{
+			sceneNode.rotate(0.0, 50.0 * dt, 0.0);
+		}
+		cubeNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(gl, "img/earth_map/cloud_normal.png"));
+		cubeNode.setPosition(-1.9, 0.0, -7.0);
 
-		//scene.addChild(cubeNode);
-		//scene.addChild(cloudNode);
+		scene.addChild(cubeNode);
+		scene.addChild(cloudNode);
 		scene.addChild(globeNode);
 	}
 

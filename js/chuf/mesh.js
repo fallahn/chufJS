@@ -51,7 +51,7 @@ function MeshResource()
 
 	function existingMesh(name)
 	{
-		for(i = 0; i < meshes.length; ++i)
+		for(var i = 0; i < meshes.length; ++i)
 		{
 			if(meshes[i][0] === name)
 			{
@@ -109,14 +109,14 @@ function MeshResource()
 		var tangents   = vertexData.tangents;
 		var bitangents = vertexData.bitangents;
 
-		for(i = 0; i < positions.length; ++i)
+		for(var i = 0; i < positions.length; ++i)
 		{
 			normals.push(0.0);
 			tangents.push(0.0);
 			bitangents.push(0.0);
 		}
 
-		for(i = 0; i < indices.length; i += 3)
+		for(var i = 0; i < indices.length; i += 3)
 		{
 			var face = 
 			{
@@ -169,7 +169,7 @@ function MeshResource()
 
 			//calc weight and output normal vecs
 			var vertPositions = [face.p0, face.p1, face.p2];
-			for(j = 0; j < vertPositions.length; j++)
+			for(var j = 0; j < vertPositions.length; j++)
 			{
 
 				var a = vec3.create();
@@ -192,10 +192,10 @@ function MeshResource()
 		var accumulatorN = [];
 		var accumulatorB = [];
 		var accumulatorT = [];
-		for(i = 0; i < dupIds.length; i++)
+		for(var i = 0; i < dupIds.length; i++)
 		{
 			var exists = false;
-			for(j = 0; j < accumulatorN.length; ++j)
+			for(var j = 0; j < accumulatorN.length; ++j)
 			{
 				if(accumulatorN[j][0] === dupIds[i][0])
 				{
@@ -223,9 +223,9 @@ function MeshResource()
 
 		}
 		//set each to accumulated value
-		for(i = 0; i < dupIds.length; i++)
+		for(var i = 0; i < dupIds.length; i++)
 		{
-			for(j = 0; j < accumulatorN.length; ++j)
+			for(var j = 0; j < accumulatorN.length; ++j)
 			{
 				setVec3(accumulatorN[j][0], normals, accumulatorN[j][1]);
 				setVec3(accumulatorB[j][0], bitangents, accumulatorB[j][1]);
@@ -241,7 +241,7 @@ function MeshResource()
 		}
 
 		//normalise all 3 arrays
-		for(i = 0; i < this.positionBuffer.itemCount; i++)
+		for(var i = 0; i < this.positionBuffer.itemCount; i++)
 		{
 			var n = getVec3(i, normals);
 			vec3.normalize(n, n);
@@ -258,7 +258,7 @@ function MeshResource()
 
 		//create normal buffer
 		var interleaved = [];
-		for(i = 0; i < normals.length; i+=3)
+		for(var i = 0; i < normals.length; i+=3)
 		{
 			interleaved.push(normals[i]);
 			interleaved.push(normals[i + 1]);
@@ -285,7 +285,7 @@ function MeshResource()
 		var red          = vec4.create([1.0, 0.0, 0.0, 1.0]);
 		var green        = vec4.create([0.0, 1.0, 0.0, 1.0]);
 		var blue         = vec4.create([0.0, 0.0, 1.0, 1.0]);
-		for(i = 0; i < positions.length; i+=3)
+		for(var i = 0; i < positions.length; i+=3)
 		{
 			debugData.push(positions[i]);
 			debugData.push(positions[i + 1]);
@@ -541,7 +541,7 @@ function MeshResource()
 			}
 		}
 		//else if band is 0 or bandCount - 1 then all at top or bottom position
-		for(i = 1; i <=stripCount; ++i) //TODO this doesn't work correctly
+		for(var i = 1; i <=stripCount; ++i) //TODO this doesn't work correctly
 		{
 			vertexData.positionIds.push([0, i]);
 			vertexData.positionIds.push([indexData.length - stripCount, indexData.length - (stripCount - i)]);

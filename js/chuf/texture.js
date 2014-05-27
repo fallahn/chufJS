@@ -12,7 +12,7 @@ function TextureResource()
 	this.getTexture = function(gl, textureName)
 	{
 		//check texture exists
-		for(i = 0; i < textures.length; ++i)
+		for(var i = 0; i < textures.length; ++i)
 		{
 			if(textures[i].getName() === textureName)
 			{

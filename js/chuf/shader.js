@@ -49,7 +49,7 @@ function ShaderResource()
 	this.getShaderProgram = function(gl, shaderName)
 	{
 		//check if shader exists
-		for(i = 0; i < shaders.length; ++i)
+		for(var i = 0; i < shaders.length; ++i)
 		{
 			if(shaders[i].shaderName === shaderName)
 			{
@@ -280,7 +280,7 @@ function ShaderResource()
 			var location = getUniformLocation(name);
 			if(location != -1) //TODO check available texture units
 			{
-				for(i = 0; i < textures.length; ++i)
+				for(var i = 0; i < textures.length; ++i)
 				{
 					if(textures[i][0] == location)
 					{
@@ -293,7 +293,7 @@ function ShaderResource()
 		}
 		function bindTextures()
 		{
-			for(i = 0; i < textures.length; ++i)
+			for(var i = 0; i < textures.length; ++i)
 			{
 				gl.activeTexture(gl.TEXTURE0 + i);
 				textures[i][1].bind();
