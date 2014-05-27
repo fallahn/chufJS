@@ -46,7 +46,7 @@ function ShaderResource()
 		return activeProgram;
 	}
 
-	this.getShaderProgram = function(glContext, shaderName)
+	this.getShaderProgram = function(gl, shaderName)
 	{
 		//check if shader exists
 		for(i = 0; i < shaders.length; ++i)
@@ -60,21 +60,21 @@ function ShaderResource()
 		//create it if it doesn't
 		var fragShader;
 		var vertShader;
-		var newShader = new ShaderProgram(shaderName, glContext);
+		var newShader = new ShaderProgram(shaderName, gl);
 
 		switch (shaderName)
 		{
 		case ShaderName.PHONG:
-			fragShader = getShader(glContext, phongFrag, ShaderType.FRAGMENT);
-			vertShader = getShader(glContext, phongVert, ShaderType.VERTEX);
+			fragShader = getShader(gl, phongFrag, ShaderType.FRAGMENT);
+			vertShader = getShader(gl, phongVert, ShaderType.VERTEX);
 		break;
 		case ShaderName.NORMALMAP:
-			fragShader = getShader(glContext, normalFrag, ShaderType.FRAGMENT);
-			vertShader = getShader(glContext, normalVert, ShaderType.VERTEX);
+			fragShader = getShader(gl, normalFrag, ShaderType.FRAGMENT);
+			vertShader = getShader(gl, normalVert, ShaderType.VERTEX);
 		break;
 		case ShaderName.DEBUG:
-			fragShader = getShader(glContext, debugFrag, ShaderType.FRAGMENT);
-			vertShader = getShader(glContext, debugVert, ShaderType.VERTEX);
+			fragShader = getShader(gl, debugFrag, ShaderType.FRAGMENT);
+			vertShader = getShader(gl, debugVert, ShaderType.VERTEX);
 		break;
 		default:
 		//TODO allow for custom shaders
@@ -82,12 +82,12 @@ function ShaderResource()
 		return null;
 		}
 		
-		newShader.setProgram(glContext.createProgram());
-		glContext.attachShader(newShader.getProgram(), vertShader);
-		glContext.attachShader(newShader.getProgram(), fragShader);
-		glContext.linkProgram(newShader.getProgram());
+		newShader.setProgram(gl.createProgram());
+		gl.attachShader(newShader.getProgram(), vertShader);
+		gl.attachShader(newShader.getProgram(), fragShader);
+		gl.linkProgram(newShader.getProgram());
 
-		if(!glContext.getProgramParameter(newShader.getProgram(), glContext.LINK_STATUS))
+		if(!gl.getProgramParameter(newShader.getProgram(), gl.LINK_STATUS))
 		{
 			alert("Failed to Link Shader Program");
 			return null;
@@ -97,16 +97,16 @@ function ShaderResource()
 		return newShader;
 
 		//----------------------------------------
-		function getShader(glContext, str, type)
+		function getShader(gl, str, type)
 		{
 			var shader;
 			if(type == ShaderType.FRAGMENT)
 			{
-				shader = glContext.createShader(glContext.FRAGMENT_SHADER);
+				shader = gl.createShader(gl.FRAGMENT_SHADER);
 			}
 			else if(type == ShaderType.VERTEX)
 			{
-				shader = glContext.createShader(glContext.VERTEX_SHADER);
+				shader = gl.createShader(gl.VERTEX_SHADER);
 			}
 			else
 			{
@@ -114,12 +114,12 @@ function ShaderResource()
 				return null;
 			}
 
-			glContext.shaderSource(shader, str);
-			glContext.compileShader(shader);
+			gl.shaderSource(shader, str);
+			gl.compileShader(shader);
 
-			if(!glContext.getShaderParameter(shader, glContext.COMPILE_STATUS))
+			if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
 			{
-				alert(glContext.getShaderInfoLog(shader));
+				alert(gl.getShaderInfoLog(shader));
 				return null;
 			}
 
@@ -128,7 +128,7 @@ function ShaderResource()
 	}
 
 	//----------------------------------------
-	function ShaderProgram(shadername, glContext)
+	function ShaderProgram(shadername, gl)
 	{
 		this.shaderName = shadername;
 
@@ -173,9 +173,9 @@ function ShaderResource()
 		}
 		function fetchAttribute(name)
 		{
-			var attribute = glContext.getAttribLocation(program, name);
+			var attribute = gl.getAttribLocation(program, name);
 			if(attribute != -1)
-				glContext.enableVertexAttribArray(attribute);
+				gl.enableVertexAttribArray(attribute);
 			return attribute;
 		}
 
@@ -201,27 +201,27 @@ function ShaderResource()
 			{
 			case ShaderUniform.PMAT:
 				if(pMatUniformLocation == null)
-					pMatUniformLocation = glContext.getUniformLocation(program, "pMat");
+					pMatUniformLocation = gl.getUniformLocation(program, "pMat");
 			return pMatUniformLocation;
 			case ShaderUniform.MVMAT:
 				if(mvMatUniformLocation == null)
-					mvMatUniformLocation = glContext.getUniformLocation(program, "mvMat");
+					mvMatUniformLocation = gl.getUniformLocation(program, "mvMat");
 			return mvMatUniformLocation;
 			case ShaderUniform.NMAT:
 				if(nMatUniformLocation == null)
-					nMatUniformLocation = glContext.getUniformLocation(program, "nMat");
+					nMatUniformLocation = gl.getUniformLocation(program, "nMat");
 			return nMatUniformLocation;
 			case ShaderUniform.COLOURMAP:
 				if(colourmapUniformLocation == null)
-					colourmapUniformLocation = glContext.getUniformLocation(program, "colourMap");
+					colourmapUniformLocation = gl.getUniformLocation(program, "colourMap");
 			return colourmapUniformLocation;
 			case ShaderUniform.NORMALMAP:
 				if(normalmapUniformLocation == null)
-					normalmapUniformLocation = glContext.getUniformLocation(program, "normalMap");
+					normalmapUniformLocation = gl.getUniformLocation(program, "normalMap");
 			return normalmapUniformLocation;
 			case ShaderUniform.SPECULARMAP:
 				if(specularmapUniformLocation == null)
-					specularmapUniformLocation = glContext.getUniformLocation(program, "specularMap");
+					specularmapUniformLocation = gl.getUniformLocation(program, "specularMap");
 			return specularmapUniformLocation;
 			default:
 				console.log("unable to find shader uniform");
@@ -231,47 +231,47 @@ function ShaderResource()
 
 		this.setUniformVec2 = function(name, value)
 		{
-			glContext.useProgram(program);
+			gl.useProgram(program);
 			var location = getUniformLocation(name);
 			if(location != -1)
-				glContext.uniform2fv(location, value);
-			glContext.useProgram(activeProgram);
+				gl.uniform2fv(location, value);
+			gl.useProgram(activeProgram);
 		}
 
 		this.setUniformVec3 = function(name, value)
 		{
-			glContext.useProgram(program);
+			gl.useProgram(program);
 			var location = getUniformLocation(name);
 			if(location != -1)
-				glContext.uniform3fv(location, value);
-			glContext.useProgram(activeProgram);
+				gl.uniform3fv(location, value);
+			gl.useProgram(activeProgram);
 		}
 
 		this.setUniformVec4 = function(name, value)
 		{
-			glContext.useProgram(program);
+			gl.useProgram(program);
 			var location = getUniformLocation(name);
 			if(location != -1)
-				glContext.uniform4fv(location, value);
-			glContext.useProgram(activeProgram);
+				gl.uniform4fv(location, value);
+			gl.useProgram(activeProgram);
 		}
 
 		this.setUniformMat3 = function(name, value)
 		{
-			glContext.useProgram(program);
+			gl.useProgram(program);
 			var location = getUniformLocation(name);
 			if(location != -1)
-				glContext.uniformMatrix3fv(location, false, value);
-			glContext.useProgram(activeProgram);
+				gl.uniformMatrix3fv(location, false, value);
+			gl.useProgram(activeProgram);
 		}
 
 		this.setUniformMat4 = function(name, value)
 		{
-			glContext.useProgram(program);
+			gl.useProgram(program);
 			var location = getUniformLocation(name);
 			if(location)
-				glContext.uniformMatrix4fv(location, false, value);
-			glContext.useProgram(activeProgram);
+				gl.uniformMatrix4fv(location, false, value);
+			gl.useProgram(activeProgram);
 		}
 
 		var textures = [];
@@ -295,15 +295,15 @@ function ShaderResource()
 		{
 			for(i = 0; i < textures.length; ++i)
 			{
-				glContext.activeTexture(glContext.TEXTURE0 + i);
+				gl.activeTexture(gl.TEXTURE0 + i);
 				textures[i][1].bind();
-				glContext.uniform1i(textures[i][0], i);
+				gl.uniform1i(textures[i][0], i);
 			}
 		}
 
 		this.bind = function()
 		{
-			glContext.useProgram(program);
+			gl.useProgram(program);
 			activeProgram = program;
 			bindTextures();
 		}

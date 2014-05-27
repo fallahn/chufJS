@@ -27,24 +27,24 @@ function MeshResource()
 		}
 	}
 
-	this.getSphere = function(glContext, diameter)
+	this.getSphere = function(gl, diameter)
 	{
 		var name = "sphere" + diameter.toString();
 		var mesh = existingMesh(name);
 		if(mesh) return mesh;
 
-		mesh = new Mesh(glContext, sphere(diameter));
+		mesh = new Mesh(gl, sphere(diameter));
 		meshes.push([name, mesh]);
 		return mesh;
 	}
 
-	this.getCube = function(glContext, width)
+	this.getCube = function(gl, width)
 	{
 		var name = "cube" + width.toString();
 		var mesh = existingMesh(name);
 		if(mesh) return mesh;
 
-		mesh = new Mesh(glContext, cube(width));
+		mesh = new Mesh(gl, cube(width));
 		meshes.push([name, mesh]);
 		return mesh;
 	}
@@ -74,7 +74,7 @@ function MeshResource()
 	}
 
 	//-----base class for meshes-----//
-	function Mesh(glContext, vertexData)
+	function Mesh(gl, vertexData)
 	{
 		this.normalBuffer   = null;
 		this.uvBuffer       = null;
@@ -82,21 +82,21 @@ function MeshResource()
 		this.indexBuffer    = null;
 		var debugBuffer     = null;	
 
-		this.uvBuffer = glContext.createBuffer();
-		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.uvBuffer);
-		glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(vertexData.uvs), glContext.STATIC_DRAW);
+		this.uvBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.uvBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexData.uvs), gl.STATIC_DRAW);
 		this.uvBuffer.itemSize = 2;
 		this.uvBuffer.itemCount = vertexData.uvs.length / 2;
 
-		this.positionBuffer = glContext.createBuffer();
-		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.positionBuffer);
-		glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(vertexData.positions), glContext.STATIC_DRAW);
+		this.positionBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexData.positions), gl.STATIC_DRAW);
 		this.positionBuffer.itemSize = 3;
 		this.positionBuffer.itemCount = vertexData.positions.length / 3;
 
-		this.indexBuffer = glContext.createBuffer();
-		glContext.bindBuffer(glContext.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-		glContext.bufferData(glContext.ELEMENT_ARRAY_BUFFER, new Uint16Array(vertexData.indices), glContext.STATIC_DRAW);
+		this.indexBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(vertexData.indices), gl.STATIC_DRAW);
 		this.indexBuffer.itemSize = 1;
 		this.indexBuffer.itemCount = vertexData.indices.length;
 
@@ -272,9 +272,9 @@ function MeshResource()
 			interleaved.push(bitangents[i + 1]);
 			interleaved.push(bitangents[i + 2]);
 		}
-		this.normalBuffer = glContext.createBuffer();
-		glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
-		glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(interleaved), glContext.STATIC_DRAW);
+		this.normalBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(interleaved), gl.STATIC_DRAW);
 		this.normalBuffer.itemSize = 3;
 		this.normalBuffer.itemCount = normals.length / 3;
 
@@ -335,9 +335,9 @@ function MeshResource()
 			debugData.push(blue[2]);
 			debugData.push(blue[3]);	
 		}
-		debugBuffer = glContext.createBuffer();
-		glContext.bindBuffer(glContext.ARRAY_BUFFER, debugBuffer);
-		glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array(debugData), glContext.STATIC_DRAW);
+		debugBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, debugBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(debugData), gl.STATIC_DRAW);
 
 
 //------------------------------------------------------------------------------------
@@ -373,24 +373,25 @@ function MeshResource()
 			}
 		}
 
-		this.draw = function(glContext, matrices)
+		var nMatrix = mat3.create();
+		this.draw = function(gl, matrices)
 		{
 			//bind shader attrib buffers - TODO check and warn if not exist
-			glContext.bindBuffer(glContext.ARRAY_BUFFER, this.positionBuffer);
-			glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.VERTEX), this.positionBuffer.itemSize, glContext.FLOAT, false, 0, 0);
-			glContext.bindBuffer(glContext.ARRAY_BUFFER, this.uvBuffer);
-			glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TEXCOORD), this.uvBuffer.itemSize, glContext.FLOAT, false, 0,0);
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+			gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.VERTEX), this.positionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.uvBuffer);
+			gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TEXCOORD), this.uvBuffer.itemSize, gl.FLOAT, false, 0,0);
 
 			if(this.normalBuffer)
 			{
-				glContext.bindBuffer(glContext.ARRAY_BUFFER, this.normalBuffer);
-				glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.NORMAL), this.normalBuffer.itemSize, glContext.FLOAT, false, 36, 0);
+				gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+				gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.NORMAL), this.normalBuffer.itemSize, gl.FLOAT, false, 36, 0);
 
 				if(shaderProgram.shaderName === ShaderName.NORMALMAP)
 				{
 					//bind normal tangents
-					glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TANGENT), this.normalBuffer.itemSize, glContext.FLOAT, false, 36, 12);
-					glContext.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.BITANGENT), this.normalBuffer.itemSize, glContext.FLOAT, false, 36, 24);
+					gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TANGENT), this.normalBuffer.itemSize, gl.FLOAT, false, 36, 12);
+					gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.BITANGENT), this.normalBuffer.itemSize, gl.FLOAT, false, 36, 24);
 				}
 			}			
 
@@ -411,15 +412,15 @@ function MeshResource()
 			
 			shaderProgram.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
 			shaderProgram.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
-			var nMatrix = mat3.create();
+			
 			mat4.toInverseMat3(matrices.mvMatrix, nMatrix);
 			mat3.transpose(nMatrix);
 			shaderProgram.setUniformMat3(ShaderUniform.NMAT, nMatrix);
 
 			//bind element buffer and draw
 			shaderProgram.bind();			
-			glContext.bindBuffer(glContext.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-			glContext.drawElements(glContext.TRIANGLES, this.indexBuffer.itemCount, glContext.UNSIGNED_SHORT, 0);
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+			gl.drawElements(gl.TRIANGLES, this.indexBuffer.itemCount, gl.UNSIGNED_SHORT, 0);
 
 			//for drawing normals in debug
 			var drawNormals = true;
@@ -429,10 +430,10 @@ function MeshResource()
 				debugShader.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
 				debugShader.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
 
-				glContext.bindBuffer(glContext.ARRAY_BUFFER, debugBuffer);
-				glContext.vertexAttribPointer(debugShader.getAttribute(ShaderAttribute.VERTEX), 3, glContext.FLOAT, false, 28, 0);
-				glContext.vertexAttribPointer(debugShader.getAttribute(ShaderAttribute.COLOUR), 4, glContext.FLOAT, false, 28, 12);
-				glContext.drawArrays(glContext.LINES, 0, vertexData.indices.length);
+				gl.bindBuffer(gl.ARRAY_BUFFER, debugBuffer);
+				gl.vertexAttribPointer(debugShader.getAttribute(ShaderAttribute.VERTEX), 3, gl.FLOAT, false, 28, 0);
+				gl.vertexAttribPointer(debugShader.getAttribute(ShaderAttribute.COLOUR), 4, gl.FLOAT, false, 28, 12);
+				gl.drawArrays(gl.LINES, 0, this.normalBuffer.itemCount + 173); //TODO work out the relevance of the missing 173
 			}
 
 			//console.log(shaderProgram.shaderName);

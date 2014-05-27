@@ -1,44 +1,16 @@
 function Scene()
 {
 	//root node of the scene, main draw calls passed down to children
-	var matrices =
+	var rootMatrices =
 	{
 		pMatrix : mat4.create(),
 		mvMatrix : mat4.create()
 	}
 	
-	this.update = function(dt)
-	{
-		var deletedList = [];
-		for(i = 0; i < children.length; i++)
-		{
-			//update each
-			children[i].update(dt, children[i]);
-
-			//remove deleted
-			if(children[i].deleted())
-				deletedList.push(i);
-		}
-		for(i = 0; i < deletedList.length; i++)
-			children.splice(i, 1); //TODO potential optimisation if IDs are concurrent
-	}
-
-	this.draw = function(glContext)
-	{
-		//TODO move pMatrix to camera and only update when necessary
-		mat4.perspective(45, glContext.viewportWidth / glContext.viewportHeight, 0.1, 100.0, matrices.pMatrix);		
-
-		for(i = 0; i < children.length; i++)
-		{
-			mat4.identity(matrices.mvMatrix);
-			children[i].draw(glContext, matrices);
-		}
-	}
-
-	var children = [];
+	var rootChildren = [];
 	this.addChild = function(sceneNode)
 	{
-		children.push(sceneNode);
+		rootChildren.push(sceneNode);
 	}
 
 	var UID = 0;
@@ -47,6 +19,34 @@ function Scene()
 		var node = new SceneNode();
 		node.UID = UID++;
 		return node;
+	}
+
+	this.update = function(dt)
+	{
+		var deletedList = [];
+		for(i = 0; i < rootChildren.length; i++)
+		{
+			//update each
+			rootChildren[i].update(dt, rootChildren[i]);
+
+			//remove deleted
+			if(rootChildren[i].deleted())
+				deletedList.push(i);
+		}
+		for(i = 0; i < deletedList.length; i++)
+			rootChildren.splice(i, 1); //TODO potential optimisation if IDs are concurrent
+	}
+
+	this.draw = function(gl)
+	{
+		//TODO move pMatrix to camera and only update when necessary
+		mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, rootMatrices.pMatrix);		
+
+		for(i = 0; i < rootChildren.length; i++)
+		{
+			mat4.identity(rootMatrices.mvMatrix);
+			rootChildren[i].draw(gl, rootMatrices);
+		}
 	}
 
 
@@ -148,8 +148,9 @@ function Scene()
 			}			
 
 			this.updateSelf(dt, sceneNode);
-			for(j = 0; j < children.length; ++j)
+			for(j = 0; j < children.length; j++)
 				children[j].update(dt, children[j]);
+			
 		}
 
 		this.updateSelf = function(dt, sceneNode)
@@ -178,7 +179,7 @@ function Scene()
 			}
 		}
 
-		this.draw = function(glContext, matrices)
+		this.draw = function(gl, matrices)
 		{
 			matrices.mvMatrix = mat4.multiply(matrices.mvMatrix, mvMatrix);
 			
@@ -197,11 +198,11 @@ function Scene()
 				{
 					mesh.setTexture(TextureType.SPECULAR, specularTexture);
 				}
-				mesh.draw(glContext, matrices);
+				mesh.draw(gl, matrices);
 			}
 
-			for(i = 0; i < children.length; ++i)
-				children[i].draw(glContext, matrices);
+			for(j = 0; j < children.length; ++j)
+				children[j].draw(gl, matrices);
 		}
 
 		var isDeleted = false;

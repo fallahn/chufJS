@@ -10,7 +10,7 @@ function runApp(canvasId)
 
 function chufApp()
 {
-	var glContext;
+	var gl;
 	var shaderResource = new ShaderResource();
 	var textureResource = new TextureResource();
 	var meshResource = new MeshResource();
@@ -29,77 +29,78 @@ function chufApp()
 	{
 		try
 		{
-			glContext = canvas.getContext("experimental-webgl");
-			glContext.viewportWidth = canvas.width;
-			glContext.viewportHeight = canvas.height;
-			glContext.clearColor(0.0, 0.03, 0.07, 1.0);
-			glContext.enable(glContext.DEPTH_TEST);
+			gl = canvas.getContext("experimental-webgl");
+			gl.viewportWidth = canvas.width;
+			gl.viewportHeight = canvas.height;
+			gl.clearColor(0.0, 0.03, 0.07, 1.0);
+			gl.enable(gl.DEPTH_TEST);
 			//TODO move cull options to multipass rendering
-			glContext.enable(glContext.CULL_FACE);
-			glContext.cullface(glContext.FRONT);
-			glContext.enable(glContext.BLEND);
-			glContext.blend_func(glContext.SRC_ALPHA, glContext.ONE);
-			glContext.blendEquation(glContext.FUNC_ADD);
+			gl.enable(gl.CULL_FACE);
+			gl.cullface(gl.FRONT);
+			gl.enable(gl.BLEND);
+			gl.blend_func(gl.SRC_ALPHA, gl.ONE);
+			gl.blendEquation(gl.FUNC_ADD);
 		}
 		catch(e)
 		{
-			if(!glContext) //TODO make this fail a bit more nicerer on unsupported browsers
+			if(!gl) //TODO make this fail a bit more nicerer on unsupported browsers
 				alert("Failed to initialise webGL");
 		}
 	}
 
 	function loadScene()
 	{
-		var globeMesh = meshResource.getSphere(glContext, 1.5);
-		globeMesh.setShader(shaderResource.getShaderProgram(glContext, ShaderName.NORMALMAP));
-		globeMesh.setDebugShader(shaderResource.getShaderProgram(glContext, ShaderName.DEBUG));
+		var globeMesh = meshResource.getSphere(gl, 1.5);
+		globeMesh.setShader(shaderResource.getShaderProgram(gl, ShaderName.NORMALMAP));
+		globeMesh.setDebugShader(shaderResource.getShaderProgram(gl, ShaderName.DEBUG));
 		
 		var globeNode = new scene.createNode();
 		globeNode.attachMesh(globeMesh);
 		globeNode.setPosition(0.0, 0.0, -7.0);
 		globeNode.updateSelf = function(dt, sceneNode)
 		{
-			sceneNode.rotate(0.0, 4.0 * dt, 0.0);
+			sceneNode.rotate(0.0, 14.0 * dt, 0.0);
 		}
-		globeNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(glContext, "img/earth_map/earth_colour.png"));
-		globeNode.setTexture(TextureType.SPECULAR, textureResource.getTexture(glContext, "img/earth_map/earth_specular.png"));
-		globeNode.setTexture(TextureType.NORMAL, textureResource.getTexture(glContext, "img/earth_map/earth_normal.png"));
+		globeNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(gl, "img/earth_map/earth_colour.png"));
+		globeNode.setTexture(TextureType.SPECULAR, textureResource.getTexture(gl, "img/earth_map/earth_specular.png"));
+		globeNode.setTexture(TextureType.NORMAL, textureResource.getTexture(gl, "img/earth_map/earth_normal.png"));
 		
-		var cloudMesh = meshResource.getSphere(glContext, 0.4);
-		cloudMesh.setShader(shaderResource.getShaderProgram(glContext, ShaderName.PHONG));
-		cloudMesh.setDebugShader(shaderResource.getShaderProgram(glContext, ShaderName.DEBUG))
+		//var cloudMesh = meshResource.getSphere(gl, 0.4);
+		//cloudMesh.setShader(shaderResource.getShaderProgram(gl, ShaderName.PHONG));
+		//cloudMesh.setDebugShader(shaderResource.getShaderProgram(gl, ShaderName.DEBUG))
 		var cloudNode = scene.createNode();
-		cloudNode.attachMesh(cloudMesh);
-		cloudNode.updateSelf = function(dt, sceneNode)
-		{
-			sceneNode.rotate(0.0, -19.0 * dt, 0.0);
-		}
-		cloudNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(glContext, "img/earth_map/cloud_colour.png"));
-		//cloudNode.setTexture(TextureType.NORMAL, textureResource.getTexture(glContext, "img/earth_map/cloud_normal.png"));
+		//cloudNode.attachMesh(cloudMesh);
+		//cloudNode.updateSelf = function(dt, sceneNode)
+		//{
+		//	sceneNode.rotate(0.0, -119.0 * dt, 0.0);
+		//}
+		//cloudNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(gl, "img/earth_map/cloud_colour.png"));
+		//cloudNode.setTexture(TextureType.NORMAL, textureResource.getTexture(gl, "img/earth_map/cloud_normal.png"));
 		cloudNode.setPosition(0.0, 0.0, 3.0);
 
-		var cubeMesh = meshResource.getCube(glContext, 0.2);
-		cubeMesh.setShader(shaderResource.getShaderProgram(glContext, ShaderName.PHONG));
+		//var cubeMesh = meshResource.getCube(gl, 0.2);
+		//cubeMesh.setShader(shaderResource.getShaderProgram(gl, ShaderName.PHONG));
 		var cubeNode = scene.createNode();
-		cubeNode.attachMesh(cubeMesh);
-		cubeNode.updateSelf = function(dt, sceneNode)
-		{
-			sceneNode.rotate(50.0 * dt, 0.0, 0.0);
-		}
-		cubeNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(glContext, "img/earth_map/cloud_colour.png"));
+		//cubeNode.attachMesh(cloudMesh);
+		cubeNode.setScale(0.5, 0.5, 0.5);
+		//cubeNode.updateSelf = function(dt, sceneNode)
+		//{
+		//	sceneNode.rotate(50.0 * dt, 0.0, 0.0);
+		//}
+		//cubeNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(gl, "img/earth_map/cloud_normal.png"));
 		cubeNode.setPosition(0.0, -0.9, 0.0);
 
-		cloudNode.addChild(cubeNode);
-		globeNode.addChild(cloudNode);
+		//scene.addChild(cubeNode);
+		//scene.addChild(cloudNode);
 		scene.addChild(globeNode);
 	}
 
 	function drawScene()
 	{
-		glContext.viewport(0, 0, glContext.viewportWidth, glContext.viewportHeight);
-		glContext.clear(glContext.COLOR_BUFFER_BIT | glContext.DEPTH_BUFFER_BIT);
+		gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-		scene.draw(glContext);
+		scene.draw(gl);
 	}
 
 	var lastTime = new Date().getTime();
