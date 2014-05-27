@@ -57,7 +57,7 @@ function chufApp()
 		var globeNode = new scene.createNode();
 		globeNode.attachMesh(globeMesh);
 		globeNode.setPosition(0.0, 0.0, -7.0);
-		globeNode.update = function(dt, sceneNode)
+		globeNode.updateSelf = function(dt, sceneNode)
 		{
 			sceneNode.rotate(0.0, 4.0 * dt, 0.0);
 		}
@@ -70,14 +70,26 @@ function chufApp()
 		cloudMesh.setDebugShader(shaderResource.getShaderProgram(glContext, ShaderName.DEBUG))
 		var cloudNode = scene.createNode();
 		cloudNode.attachMesh(cloudMesh);
-		cloudNode.update = function(dt, sceneNode)
+		cloudNode.updateSelf = function(dt, sceneNode)
 		{
-			sceneNode.rotate(0.0, 9.9 * dt, 0.0);
+			sceneNode.rotate(0.0, -19.0 * dt, 0.0);
 		}
 		cloudNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(glContext, "img/earth_map/cloud_colour.png"));
 		//cloudNode.setTexture(TextureType.NORMAL, textureResource.getTexture(glContext, "img/earth_map/cloud_normal.png"));
-		cloudNode.setPosition(3.0, 0.0, 0.0);
+		cloudNode.setPosition(0.0, 0.0, 3.0);
 
+		var cubeMesh = meshResource.getCube(glContext, 0.2);
+		cubeMesh.setShader(shaderResource.getShaderProgram(glContext, ShaderName.PHONG));
+		var cubeNode = scene.createNode();
+		cubeNode.attachMesh(cubeMesh);
+		cubeNode.updateSelf = function(dt, sceneNode)
+		{
+			sceneNode.rotate(50.0 * dt, 0.0, 0.0);
+		}
+		cubeNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(glContext, "img/earth_map/cloud_colour.png"));
+		cubeNode.setPosition(0.0, -0.9, 0.0);
+
+		cloudNode.addChild(cubeNode);
 		globeNode.addChild(cloudNode);
 		scene.addChild(globeNode);
 	}

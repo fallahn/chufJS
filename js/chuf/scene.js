@@ -10,7 +10,7 @@ function Scene()
 	this.update = function(dt)
 	{
 		var deletedList = [];
-		for(i = 0; i < children.length; ++i)
+		for(i = 0; i < children.length; i++)
 		{
 			//update each
 			children[i].update(dt, children[i]);
@@ -19,7 +19,7 @@ function Scene()
 			if(children[i].deleted())
 				deletedList.push(i);
 		}
-		for(i = 0; i < deletedList.length; ++i)
+		for(i = 0; i < deletedList.length; i++)
 			children.splice(i, 1); //TODO potential optimisation if IDs are concurrent
 	}
 
@@ -28,7 +28,7 @@ function Scene()
 		//TODO move pMatrix to camera and only update when necessary
 		mat4.perspective(45, glContext.viewportWidth / glContext.viewportHeight, 0.1, 100.0, matrices.pMatrix);		
 
-		for(i = 0; i < children.length; ++i)
+		for(i = 0; i < children.length; i++)
 		{
 			mat4.identity(matrices.mvMatrix);
 			children[i].draw(glContext, matrices);
@@ -130,7 +130,29 @@ function Scene()
 			origin[2] = z;
 		}
 
+		var mvMatrix = mat4.create();
+		var updateMatrix = true;
 		this.update = function(dt, sceneNode)
+		{
+			if(updateMatrix)
+			{
+				mat4.identity(mvMatrix);
+				mat4.translate(mvMatrix, [position[0], position[1], position[2]]);			
+			
+				mat4.rotate(mvMatrix, rotation[1], [0, 1, 0]);
+				mat4.rotate(mvMatrix, rotation[2], [0, 0, 1]);
+				mat4.rotate(mvMatrix, rotation[0], [1, 0, 0]);
+				mat4.scale(mvMatrix, [scale[0], scale[1], scale[2]]);
+				//mat4.translate(mvMatrix, [-origin[0], -origin[1],-origin[2]]);				
+				updateMatrix = false;
+			}			
+
+			this.updateSelf(dt, sceneNode);
+			for(j = 0; j < children.length; ++j)
+				children[j].update(dt, children[j]);
+		}
+
+		this.updateSelf = function(dt, sceneNode)
 		{
 			//override this with custom function
 		}
@@ -156,23 +178,8 @@ function Scene()
 			}
 		}
 
-
-		var mvMatrix = mat4.create();
-		var updateMatrix = true;
 		this.draw = function(glContext, matrices)
 		{
-			if(updateMatrix)
-			{
-				mat4.identity(mvMatrix);
-				mat4.translate(mvMatrix, [position[0], position[1], position[2]]);			
-				//mat4.translate(mvMatrix, [-origin.x, -origin.y,-origin.z]);			
-				mat4.rotate(mvMatrix, rotation[1], [0, 1, 0]);
-				mat4.rotate(mvMatrix, rotation[2], [0, 0, 1]);
-				mat4.rotate(mvMatrix, rotation[0], [1, 0, 0]);
-				mat4.scale(mvMatrix, [scale[0], scale[1], scale[2]]);
-				updateMatrix = false;
-			}
-
 			matrices.mvMatrix = mat4.multiply(matrices.mvMatrix, mvMatrix);
 			
 			if(mesh)
