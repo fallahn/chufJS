@@ -53,6 +53,7 @@ function Scene()
 	{
 		while(rootChildren.length)
 			rootChildren.pop();
+		UID = 0;
 	}
 
 

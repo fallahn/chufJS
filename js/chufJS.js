@@ -16,12 +16,22 @@ function chufApp()
 	var meshResource = new MeshResource();
 	var scene = new Scene();
 
+	var currentState = null;
+	var states = [];
+
 	this.start = function(canvasId)
 	{
 		var canvas = document.getElementById(canvasId);
 		if(initGL(canvas) == false) return;
 
 		loadScene();
+
+		//TODO create states, assign current state
+		/*
+		states[StateID.MAIN_GAME] = createGameState(gl, shaderResource, meshResource, textureResource);
+		currentState = states[StateID.MAIN_GAME];
+		*/
+
 		tick();
 	}
 
@@ -88,18 +98,21 @@ function chufApp()
 	var fixedStep = 1.0 / 30.0;
 	function tick()
 	{
+		//TODO currentState.handleEvents()
 		var now = new Date().getTime();
 		var frameTime = (now - lastTime) / 1000.0;
 		var maxSteps = 4;
 		while(frameTime > 0.0 && maxSteps > 0)
 		{
 			var dt = Math.min(frameTime, fixedStep);
-			scene.update(dt);
+			scene.update(dt); //TODO currentState.update()
 			frameTime -= dt;
 			maxSteps--;	
 		}
 
-		drawScene();
+		drawScene(); //TODO currentState.draw();
+		//TODO loading window here?
+		//TODO if(curretnState.req() != StateID.NONE) currentState.unload(); currentState = states[currentState.req()]; currentState.load(); //requests new state
 		requestAnimationFrame(tick);
 		lastTime = now;		
 	}
