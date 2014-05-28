@@ -10,6 +10,14 @@ function MeshResource()
 {
 	var meshes = [];
 
+	this.clear = function(gl)
+	{
+		for(var h = 0; h < meshes.length; ++h)
+			meshes[h].delete();
+		
+		while(meshes.length) meshes.pop();
+	}
+
 	this.loadMeshFromFile = function(path, type)
 	{
 		console.log("External mesh loaders are currently unimplemented");
@@ -374,7 +382,7 @@ function MeshResource()
 		}
 
 		var nMatrix = mat3.create();
-		this.draw = function(gl, matrices)
+		this.draw = function(matrices)
 		{
 			//bind shader attrib buffers - TODO check and warn if not exist
 			gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
@@ -439,6 +447,23 @@ function MeshResource()
 			//console.log(shaderProgram.shaderName);
 		}
 
+		this.delete = function()
+		{
+			gl.deleteBuffer(this.normalBuffer);
+			normalBuffer = null;
+			gl.deleteBuffer(this.uvBuffer);
+			this.normalBuffer = null;
+			gl.deleteBuffer(this.positionBuffer);
+			this.positionBuffer = null;
+			gl.deleteBuffer(this.indexBuffer);
+			this.indexBuffer = null;
+			gl.deleteBuffer(debugBuffer);
+			debugBuffer = null;
+		}
+
+
+
+		//---------------------------------------
 		function getVec2(index, array)
 		{
 			var offset = index * 2;

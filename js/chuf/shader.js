@@ -46,6 +46,14 @@ function ShaderResource()
 		return activeProgram;
 	}
 
+	this.clear = function(gl)
+	{
+		for(var h = 0; h < shaders.length; ++h)
+			gl.deleteProgram(shaders[h].getShaderProgram());
+		
+		while(shaders.length) shaders.pop();
+	}
+
 	this.getShaderProgram = function(gl, shaderName)
 	{
 		//check if shader exists

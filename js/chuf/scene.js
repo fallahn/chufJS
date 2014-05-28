@@ -49,7 +49,11 @@ function Scene()
 		}
 	}
 
-
+	this.clear = function()
+	{
+		while(rootChildren.length)
+			rootChildren.pop();
+	}
 
 
 
@@ -137,13 +141,14 @@ function Scene()
 			if(updateMatrix)
 			{
 				mat4.identity(mvMatrix);
-				mat4.translate(mvMatrix, [position[0], position[1], position[2]]);			
-			
+
+				mat4.translate(mvMatrix, [position[0], position[1], position[2]]);							
 				mat4.rotate(mvMatrix, rotation[1], [0, 1, 0]);
 				mat4.rotate(mvMatrix, rotation[2], [0, 0, 1]);
 				mat4.rotate(mvMatrix, rotation[0], [1, 0, 0]);
+				//scale first if you weant to scale about the origin point (this will also scale the distance to the origin of course)
 				mat4.scale(mvMatrix, [scale[0], scale[1], scale[2]]);
-				//mat4.translate(mvMatrix, [-origin[0], -origin[1],-origin[2]]);				
+				mat4.translate(mvMatrix, [-origin[0], -origin[1], -origin[2]]);				
 				updateMatrix = false;
 			}			
 
@@ -198,7 +203,7 @@ function Scene()
 				{
 					mesh.setTexture(TextureType.SPECULAR, specularTexture);
 				}
-				mesh.draw(gl, matrices);
+				mesh.draw(matrices);
 			}
 
 			for(var l = 0; l < children.length; ++l)

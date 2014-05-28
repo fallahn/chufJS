@@ -26,6 +26,14 @@ function TextureResource()
 		return texture;
 	}
 
+	this.clear = function(gl)
+	{
+		for(var i = 0; i < textures.length; ++i)
+			textures[i].delete();
+
+		while(textures.length) textures.pop();
+	}
+
 	//---------------------------------------------------------//
 	function Texture(gl, name)
 	{
@@ -72,6 +80,11 @@ function TextureResource()
 		this.bind = function()
 		{
 			gl.bindTexture(gl.TEXTURE_2D, glTexture);
+		}
+
+		this.delete = function()
+		{
+			gl.deleteTexture(glTexture);
 		}
 	}
 }
