@@ -162,6 +162,7 @@ function Scene()
 		this.updateSelf = function(dt, sceneNode)
 		{
 			//override this with custom function
+			//see state creation in examples folder
 		}
 
 		//nodes carry own textures so multiple textures can be applied to shared meshes

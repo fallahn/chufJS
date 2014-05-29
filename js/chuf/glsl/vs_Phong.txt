@@ -1,0 +1,26 @@
+//////////////////////////////////////
+// default phong shading vertex shader
+//////////////////////////////////////
+
+//GLES 2.0 / WebGL
+
+#version 100
+attribute vec3 aPosition;
+attribute vec2 aTexCoord;
+attribute vec3 aNormal;
+
+uniform mat4 uMVMat;
+uniform mat4 uPMat;
+uniform mat3 uNMat;
+
+varying vec2 vTexCoord;
+varying vec3 vNormal;
+varying vec4 vPosition;
+
+void main(void)
+{
+	vPosition = uMVMat * vec4(aPosition, 1.0);
+	gl_Position = uPMat * vPosition;
+	vTexCoord = aTexCoord;
+	vNormal = uNMat * aNormal;
+}

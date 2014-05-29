@@ -1,0 +1,44 @@
+/////////////////////////////////////////////////////////
+// vertex shader for normal mapping with phong highlights
+/////////////////////////////////////////////////////////
+
+//GLES 2.0 / WebGL
+
+#version 100
+attribute vec3 aPosition;
+attribute vec2 aTexCoord;
+attribute vec3 aNormal;
+attribute vec3 aTan;
+attribute vec3 aBitan;
+
+uniform mat4 uMVMat;
+uniform mat4 uPMat;
+uniform mat3 uNMat;
+
+varying vec3 vLightVec;
+varying vec3 vEyeVec;
+varying vec2 vTexCoord;
+
+vec3 lightPosition = vec3(8.0, 8.0, 3.0); //TODO make this a uniform
+
+void main(void)
+{
+	vec4 viewVert = uMVMat * vec4(aPosition, 1.0);
+	gl_Position = uPMat * viewVert;
+	vTexCoord = aTexCoord;
+
+	vec3 n = normalize(uNMat * aNormal);
+	vec3 t = normalize(uNMat * aTan);
+	vec3 b = normalize(uNMat * aBitan);
+
+	vec3 temp = lightPosition - viewVert.xyz;
+	vLightVec.x = dot(temp, t);
+	vLightVec.y = dot(temp, b);
+	vLightVec.z = dot(temp, n);
+
+	temp = -viewVert.xyz;
+	vEyeVec.x = dot(temp, t);
+	vEyeVec.y = dot(temp, b);
+	vEyeVec.z = dot(temp, n);
+
+}

@@ -73,16 +73,16 @@ function ShaderResource()
 		switch (shaderName)
 		{
 		case ShaderName.PHONG:
-			fragShader = getShader(gl, phongFrag, ShaderType.FRAGMENT);
-			vertShader = getShader(gl, phongVert, ShaderType.VERTEX);
+			fragShader = getShader(gl, readFile("/js/chuf/glsl/fs_Phong.txt"), ShaderType.FRAGMENT);
+			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_Phong.txt"), ShaderType.VERTEX);
 		break;
 		case ShaderName.NORMALMAP:
-			fragShader = getShader(gl, normalFrag, ShaderType.FRAGMENT);
-			vertShader = getShader(gl, normalVert, ShaderType.VERTEX);
+			fragShader = getShader(gl, readFile("/js/chuf/glsl/fs_PhongBump.txt"), ShaderType.FRAGMENT);
+			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_PhongBump.txt"), ShaderType.VERTEX);
 		break;
 		case ShaderName.DEBUG:
-			fragShader = getShader(gl, debugFrag, ShaderType.FRAGMENT);
-			vertShader = getShader(gl, debugVert, ShaderType.VERTEX);
+			fragShader = getShader(gl, readFile("/js/chuf/glsl/fs_Debug.txt"), ShaderType.FRAGMENT);
+			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_Debug.txt"), ShaderType.VERTEX);
 		break;
 		default:
 		//TODO allow for custom shaders
@@ -132,6 +132,27 @@ function ShaderResource()
 			}
 
 			return shader;
+		}
+		//use ajax to read shader files from server
+		function readFile(file)
+		{
+			//NOTE this probably requires the use of .txt as shader source
+			//file extension, depending on webserver file permissions.
+			var rq = new XMLHttpRequest(); //TODO cross browserise
+
+		    rq.open('GET', file, false);
+		    rq.send(null);
+
+		    if (rq.status >= 200 && rq.status < 400)
+		    {
+		        //TODO file parsing for complex shaders
+		        //such as those with pragma directives
+		        return rq.responseText;
+		    }
+		    else
+		    {
+		    	console.log("Failed to open shader source file " + file + "Error: " + rq.status.toString());
+		    }
 		}
 	}
 
@@ -324,7 +345,9 @@ function ShaderResource()
 //TODO move shader strings into own files
 
 //--------------------------------------------------------
+/*
 var debugFrag = [
+"	#version 100",
 "	precision mediump float;",
 "	varying vec4 vColour;",
 "	void main()",
@@ -333,6 +356,7 @@ var debugFrag = [
 "	}"].join("\n");
 
 var debugVert = [
+"	#version 100",
 "	attribute vec3 aPosition;",
 "	attribute vec4 aColour;",
 "	varying vec4 vColour;",
@@ -347,6 +371,7 @@ var debugVert = [
 
 //--------------------------------------------------------
 var phongFrag = [
+"	#version 100",
 "	precision mediump float;",
 "	varying vec2 vTexCoord;",
 "	varying vec3 vNormal;",
@@ -377,6 +402,7 @@ var phongFrag = [
 "	}"].join("\n");
 
 var phongVert = [
+"	#version 100",
 "	attribute vec3 aPosition;",
 "	attribute vec2 aTexCoord;",
 "	attribute vec3 aNormal;",
@@ -395,11 +421,12 @@ var phongVert = [
 "		gl_Position = uPMat * vPosition;",
 "		vTexCoord = aTexCoord;",
 "		vNormal = uNMat * aNormal;",
-"	}"].join("\n");
+"	}"].join("\n");*/
 
 //---------------------------------------------------------
-
+/*
 var normalFrag = [
+"	#version 100",
 "	precision mediump float;",
 "	varying vec2 vTexCoord;",
 "	varying vec3 vLightVec;",
@@ -414,8 +441,8 @@ var normalFrag = [
 "	vec3 ambientColour = vec3(0.01, 0.01, 0.01);",
 "	vec3 specularColour = vec3(1.0, 1.0, 1.0);",
 "	float shininess = 200.0;",
-
-/*
+*/
+/*-------------------------------------------
 "	void main(void)",
 "	{",
 "		vec4 baseColour = texture2D(colourMap, vTexCoord.xy);",
@@ -443,8 +470,8 @@ var normalFrag = [
 "		}",
 //"		finalColour.a = baseColour.a;",
 "		gl_FragColor = vec4(clamp(finalColour + spec + diff, 0.0, 1.0), baseColour.a);",
-*/
-
+------------------------------------------------*/
+/*
 "	void main(void)",
 "	{",
 "		vec4 baseColour = texture2D(uColourMap, vTexCoord.xy);",
@@ -464,6 +491,7 @@ var normalFrag = [
 "	}"].join("\n");
 
 var normalVert = [
+"	#version 100",
 "	attribute vec3 aPosition;",
 "	attribute vec2 aTexCoord;",
 "	attribute vec3 aNormal;",
@@ -500,4 +528,4 @@ var normalVert = [
 "		vEyeVec.y = dot(temp, b);",
 "		vEyeVec.z = dot(temp, n);",
 
-"	}"].join("\n");
+"	}"].join("\n");*/

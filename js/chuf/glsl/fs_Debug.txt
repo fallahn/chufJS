@@ -1,0 +1,16 @@
+/////////////////////////////////////////////////
+// fragmrnt shader used for drawing coloured mesh
+// output, useful for debugging vertex data
+/////////////////////////////////////////////////
+
+//GLES 2.0 / WebGL
+
+#version 100
+precision mediump float;
+
+varying vec4 vColour;
+
+void main()
+{
+	gl_FragColor = vColour;
+}

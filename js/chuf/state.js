@@ -15,6 +15,7 @@ menuState.update = function(dt)
 then add the scene to the scene array in chufApp.
 To change states update the request value from -1
 to the ID of the state you wish to change to.
+See examples folder for more information
 */
 
 var StateID = Object.freeze
@@ -36,23 +37,5 @@ function State()
 	this.draw        = function(){}
 
 	//------------------------------------
-	var stateRequest = StateID.NONE;
-	this.requestState = function(){return stateRequest;}
+	this.stateRequest = StateID.NONE;
 }
-
-/*TODO
-function createGameState(gl, shaderResource, meshResource, textureResource)
-{
-	var state = new State();	
-	state.load = function()
-	{
-	
-	}
-	//etc
-
-
-
-	return state;
-}
-
-*/

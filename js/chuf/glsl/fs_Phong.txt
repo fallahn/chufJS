@@ -1,0 +1,35 @@
+//////////////////////////////////////////////////
+// default phong shading with optional diffuse map
+//////////////////////////////////////////////////
+
+//GLES 2.0 / WebGL
+
+#version 100
+precision mediump float;
+varying vec2 vTexCoord;
+varying vec3 vNormal;
+varying vec4 vPosition;
+
+uniform sampler2D uColourMap;
+//uniform vec3 lightPosition;
+
+vec3 lightPosition = vec3(8.0, 8.0, 3.0); //TODO make uniforms
+vec3 ambientColour = vec3(0.05, 0.05, 0.05);
+vec3 specularColour = vec3(1.0, 1.0, 1.0);
+float shininess = 128.0; //0 - 255
+
+void main(void)
+{
+	vec3 lightDir = normalize(lightPosition - vPosition.xyz);
+	vec3 normal = normalize(vNormal);
+	vec3 eyeDir = normalize(-vPosition.xyz);
+	vec3 reflectDir = reflect(-lightDir, normal);
+
+	float specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), shininess);
+	float diffuseAmount = max(dot(normal, lightDir), 0.0);
+
+	vec4 diffuseColour = texture2D(uColourMap, vTexCoord.xy);
+	vec3 finalColour = ambientColour + (diffuseColour.rgb * diffuseAmount) + (specularColour * specAmount);
+
+	gl_FragColor = vec4(finalColour, diffuseColour.a);
+}

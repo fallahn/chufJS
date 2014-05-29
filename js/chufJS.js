@@ -14,7 +14,6 @@ function chufApp()
 	var shaderResource = new ShaderResource();
 	var textureResource = new TextureResource();
 	var meshResource = new MeshResource();
-	var scene = new Scene();
 
 	var currentState = null;
 	var states = [];
@@ -24,13 +23,10 @@ function chufApp()
 		var canvas = document.getElementById(canvasId);
 		if(initGL(canvas) == false) return;
 
-		loadScene();
-
-		//TODO create states, assign current state
-		/*
-		states[StateID.MAIN_GAME] = createGameState(gl, shaderResource, meshResource, textureResource);
+		//create states, assign current state
+		states[StateID.MAIN_GAME] = createExampleState(gl, shaderResource, meshResource, textureResource);
 		currentState = states[StateID.MAIN_GAME];
-		*/
+		currentState.load();
 
 		tick();
 	}
@@ -66,53 +62,30 @@ function chufApp()
 		}
 	}
 
-	function loadScene()
-	{
-		var globeMesh = meshResource.getSphere(gl, 1.5);
-		globeMesh.setShader(shaderResource.getShaderProgram(gl, ShaderName.NORMALMAP));
-		globeMesh.setDebugShader(shaderResource.getShaderProgram(gl, ShaderName.DEBUG));
-		
-		var globeNode = new scene.createNode();
-		globeNode.attachMesh(globeMesh);
-		globeNode.setPosition(0.0, 0.0, -7.0);
-		globeNode.updateSelf = function(dt, sceneNode)
-		{
-			sceneNode.rotate(0.0, 14.0 * dt, 0.0);
-		}
-		globeNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(gl, "img/earth_map/earth_colour.png"));
-		globeNode.setTexture(TextureType.SPECULAR, textureResource.getTexture(gl, "img/earth_map/earth_specular.png"));
-		globeNode.setTexture(TextureType.NORMAL, textureResource.getTexture(gl, "img/earth_map/earth_normal.png"));
-		
-		scene.addChild(globeNode);
-	}
-
-	function drawScene()
-	{
-		gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-		scene.draw(gl);
-	}
-
 	var lastTime = new Date().getTime();
 	var fixedStep = 1.0 / 30.0;
 	function tick()
 	{
-		//TODO currentState.handleEvents()
+		//TODO currentState.handleEvent()
 		var now = new Date().getTime();
 		var frameTime = (now - lastTime) / 1000.0;
 		var maxSteps = 4;
 		while(frameTime > 0.0 && maxSteps > 0)
 		{
 			var dt = Math.min(frameTime, fixedStep);
-			scene.update(dt); //TODO currentState.update()
+			currentState.update(dt);
 			frameTime -= dt;
 			maxSteps--;	
 		}
 
-		drawScene(); //TODO currentState.draw();
-		//TODO loading window here?
-		//TODO if(curretnState.req() != StateID.NONE) currentState.unload(); currentState = states[currentState.req()]; currentState.load(); //requests new state
+		currentState.draw();
+		
+		if(currentState.stateRequest != StateID.NONE)
+		{
+			currentState.unload();
+			currentState = states[currentState.stateRequest];
+			currentState.load();
+		}
 		requestAnimationFrame(tick);
 		lastTime = now;		
 	}
