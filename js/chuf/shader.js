@@ -17,7 +17,7 @@ var ShaderType = Object.freeze
 
 var ShaderAttribute = Object.freeze
 ({
-	VERTEX    : 0,
+	POSITION  : 0,
 	TEXCOORD  : 1,
 	NORMAL    : 2,
 	TANGENT   : 3,
@@ -150,29 +150,29 @@ function ShaderResource()
 		{
 			switch(name)
 			{
-			case ShaderAttribute.VERTEX:
+			case ShaderAttribute.POSITION:
 				if(vertexPositionAttribute == null)
-					vertexPositionAttribute = fetchAttribute("vertPos");
+					vertexPositionAttribute = fetchAttribute("aPosition");
 				return vertexPositionAttribute;
 			case ShaderAttribute.COLOUR:
 				if(vertexColourAttribute == null)
-					vertexColourAttribute = fetchAttribute("vertColour");
+					vertexColourAttribute = fetchAttribute("aColour");
 				return vertexColourAttribute;
 			case ShaderAttribute.TEXCOORD:
 				if(vertexTexCoordAttribute == null)
-					vertexTexCoordAttribute = fetchAttribute("texCoord");
+					vertexTexCoordAttribute = fetchAttribute("aTexCoord");
 				return vertexTexCoordAttribute;
 			case ShaderAttribute.NORMAL:
 				if(vertexNormalAttribute == null)
-					vertexNormalAttribute = fetchAttribute("vertNormal");
+					vertexNormalAttribute = fetchAttribute("aNormal");
 				return vertexNormalAttribute;
 			case ShaderAttribute.TANGENT:
 				if(vertexTangentAttribute == null)
-					vertexTangentAttribute = fetchAttribute("vertTan");
+					vertexTangentAttribute = fetchAttribute("aTan");
 				return vertexTangentAttribute;
 			case ShaderAttribute.BITANGENT:
 				if(vertexBitangentAttribute == null)
-					vertexBitangentAttribute = fetchAttribute("vertBitan");
+					vertexBitangentAttribute = fetchAttribute("aBitan");
 				return vertexBitangentAttribute;
 			default:
 				console.log("WARNING: requested shader attribute not found");
@@ -203,33 +203,37 @@ function ShaderResource()
 		var colourmapUniformLocation   = null;
 		var normalmapUniformLocation   = null;
 		var specularmapUniformLocation = null;
+
+		var uniforms = [];
 		function getUniformLocation(name)
 		{
+			//switch block may be unweildy but it replaces string comparison
+			//with integer commparison
 			switch(name)
 			{
 			case ShaderUniform.PMAT:
 				if(pMatUniformLocation == null)
-					pMatUniformLocation = gl.getUniformLocation(program, "pMat");
+					pMatUniformLocation = gl.getUniformLocation(program, "uPMat");
 			return pMatUniformLocation;
 			case ShaderUniform.MVMAT:
 				if(mvMatUniformLocation == null)
-					mvMatUniformLocation = gl.getUniformLocation(program, "mvMat");
+					mvMatUniformLocation = gl.getUniformLocation(program, "uMVMat");
 			return mvMatUniformLocation;
 			case ShaderUniform.NMAT:
 				if(nMatUniformLocation == null)
-					nMatUniformLocation = gl.getUniformLocation(program, "nMat");
+					nMatUniformLocation = gl.getUniformLocation(program, "uNMat");
 			return nMatUniformLocation;
 			case ShaderUniform.COLOURMAP:
 				if(colourmapUniformLocation == null)
-					colourmapUniformLocation = gl.getUniformLocation(program, "colourMap");
+					colourmapUniformLocation = gl.getUniformLocation(program, "uColourMap");
 			return colourmapUniformLocation;
 			case ShaderUniform.NORMALMAP:
 				if(normalmapUniformLocation == null)
-					normalmapUniformLocation = gl.getUniformLocation(program, "normalMap");
+					normalmapUniformLocation = gl.getUniformLocation(program, "uNormalMap");
 			return normalmapUniformLocation;
 			case ShaderUniform.SPECULARMAP:
 				if(specularmapUniformLocation == null)
-					specularmapUniformLocation = gl.getUniformLocation(program, "specularMap");
+					specularmapUniformLocation = gl.getUniformLocation(program, "uSpecularMap");
 			return specularmapUniformLocation;
 			default:
 				console.log("unable to find shader uniform");
@@ -329,15 +333,15 @@ var debugFrag = [
 "	}"].join("\n");
 
 var debugVert = [
-"	attribute vec3 vertPos;",
-"	attribute vec4 vertColour;",
+"	attribute vec3 aPosition;",
+"	attribute vec4 aColour;",
 "	varying vec4 vColour;",
-"	uniform mat4 mvMat;",
-"	uniform mat4 pMat;",
+"	uniform mat4 uMVMat;",
+"	uniform mat4 uPMat;",
 "	void main()",
 "	{",
-"		gl_Position = pMat * mvMat * vec4(vertPos, 1.0);",
-"		vColour = vertColour;",
+"		gl_Position = uPMat * uMVMat * vec4(aPosition, 1.0);",
+"		vColour = aColour;",
 "	}"].join("\n");
 
 
@@ -348,7 +352,7 @@ var phongFrag = [
 "	varying vec3 vNormal;",
 "	varying vec4 vPosition;",
 
-"	uniform sampler2D colourMap;",
+"	uniform sampler2D uColourMap;",
 //"	uniform vec3 lightPosition;",
 
 "	vec3 lightPosition = vec3(8.0, 8.0, 3.0);", //TODO make uniforms
@@ -366,20 +370,20 @@ var phongFrag = [
 "		float specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), shininess);",
 "		float diffuseAmount = max(dot(normal, lightDir), 0.0);",
 
-"		vec4 diffuseColour = texture2D(colourMap, vTexCoord.xy);",
+"		vec4 diffuseColour = texture2D(uColourMap, vTexCoord.xy);",
 "		vec3 finalColour = ambientColour + (diffuseColour.rgb * diffuseAmount) + (specularColour * specAmount);",
 
 "		gl_FragColor = vec4(finalColour, diffuseColour.a);",
 "	}"].join("\n");
 
 var phongVert = [
-"	attribute vec3 vertPos;",
-"	attribute vec2 texCoord;",
-"	attribute vec3 vertNormal;",
+"	attribute vec3 aPosition;",
+"	attribute vec2 aTexCoord;",
+"	attribute vec3 aNormal;",
 
-"	uniform mat4 mvMat;",
-"	uniform mat4 pMat;",
-"	uniform mat3 nMat;",
+"	uniform mat4 uMVMat;",
+"	uniform mat4 uPMat;",
+"	uniform mat3 uNMat;",
 
 "	varying vec2 vTexCoord;",
 "	varying vec3 vNormal;",
@@ -387,10 +391,10 @@ var phongVert = [
 
 "	void main(void)",
 "	{",
-"		vPosition = mvMat * vec4(vertPos, 1.0);",
-"		gl_Position = pMat * vPosition;",
-"		vTexCoord = texCoord;",
-"		vNormal = nMat * vertNormal;",
+"		vPosition = uMVMat * vec4(aPosition, 1.0);",
+"		gl_Position = uPMat * vPosition;",
+"		vTexCoord = aTexCoord;",
+"		vNormal = uNMat * aNormal;",
 "	}"].join("\n");
 
 //---------------------------------------------------------
@@ -402,9 +406,9 @@ var normalFrag = [
 "	varying vec3 vEyeVec;",
 
 
-"	uniform sampler2D colourMap;",
-"	uniform sampler2D specularMap;",
-"	uniform sampler2D normalMap;",
+"	uniform sampler2D uColourMap;",
+"	uniform sampler2D uSpecularMap;",
+"	uniform sampler2D uNormalMap;",
 //TODO make light params uniforms
 "	vec3 diffuseColour = vec3(0.8, 0.8, 0.8);",
 "	vec3 ambientColour = vec3(0.01, 0.01, 0.01);",
@@ -443,14 +447,14 @@ var normalFrag = [
 
 "	void main(void)",
 "	{",
-"		vec4 baseColour = texture2D(colourMap, vTexCoord.xy);",
-"		vec3 bump = normalize(texture2D(normalMap, vTexCoord.xy).xyz * 2.0 - 1.0);",
+"		vec4 baseColour = texture2D(uColourMap, vTexCoord.xy);",
+"		vec3 bump = normalize(texture2D(uNormalMap, vTexCoord.xy).xyz * 2.0 - 1.0);",
 
 "		vec3 lightDir = normalize(vLightVec);",
 "		vec3 eyeDir = normalize(vEyeVec);",
 "		vec3 reflectDir = reflect(-lightDir, bump);",
 
-"		float specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), shininess) * texture2D(specularMap, vTexCoord.xy).r;",
+"		float specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), shininess) * texture2D(uSpecularMap, vTexCoord.xy).r;",
 "		float diffuseAmount = max(dot(bump, lightDir), 0.0);",
 
 "		vec3 finalColour = ambientColour + (baseColour.rgb * diffuseAmount) + (specularColour * specAmount);",
@@ -460,15 +464,15 @@ var normalFrag = [
 "	}"].join("\n");
 
 var normalVert = [
-"	attribute vec3 vertPos;",
-"	attribute vec2 texCoord;",
-"	attribute vec3 vertNormal;",
-"	attribute vec3 vertTan;",
-"	attribute vec3 vertBitan;",
+"	attribute vec3 aPosition;",
+"	attribute vec2 aTexCoord;",
+"	attribute vec3 aNormal;",
+"	attribute vec3 aTan;",
+"	attribute vec3 aBitan;",
 
-"	uniform mat4 mvMat;",
-"	uniform mat4 pMat;",
-"	uniform mat3 nMat;",
+"	uniform mat4 uMVMat;",
+"	uniform mat4 uPMat;",
+"	uniform mat3 uNMat;",
 
 "	varying vec3 vLightVec;",
 "	varying vec3 vEyeVec;",
@@ -478,13 +482,13 @@ var normalVert = [
 
 "	void main(void)",
 "	{",
-"		vec4 viewVert = mvMat * vec4(vertPos, 1.0);",
-"		gl_Position = pMat * viewVert;",
-"		vTexCoord = texCoord;",
+"		vec4 viewVert = uMVMat * vec4(aPosition, 1.0);",
+"		gl_Position = uPMat * viewVert;",
+"		vTexCoord = aTexCoord;",
 
-"		vec3 n = normalize(nMat * vertNormal);",
-"		vec3 t = normalize(nMat * vertTan);",
-"		vec3 b = normalize(nMat * vertBitan);",
+"		vec3 n = normalize(uNMat * aNormal);",
+"		vec3 t = normalize(uNMat * aTan);",
+"		vec3 b = normalize(uNMat * aBitan);",
 
 "		vec3 temp = lightPosition - viewVert.xyz;",
 "		vLightVec.x = dot(temp, t);",
