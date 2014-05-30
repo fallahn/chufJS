@@ -19,7 +19,7 @@ varying vec3 vLightVec;
 varying vec3 vEyeVec;
 varying vec2 vTexCoord;
 
-vec3 lightPosition = vec3(8.0, 8.0, 3.0); //TODO make this a uniform
+vec3 lightPosition = vec3(8.0, 0.2, 3.0); //TODO make this a uniform
 
 void main(void)
 {

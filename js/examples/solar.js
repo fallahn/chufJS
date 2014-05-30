@@ -11,7 +11,7 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 	state.load = function()
 	{
 		//TODO loading window here?
-		var globeMesh = meshResource.getSphere(gl, 1.5);
+		var globeMesh = meshResource.getSphere(gl, 1.0);
 		globeMesh.setShader(shaderResource.getShaderProgram(gl, ShaderName.NORMALMAP));
 		globeMesh.setDebugShader(shaderResource.getShaderProgram(gl, ShaderName.DEBUG));
 		
@@ -26,7 +26,44 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		globeNode.setTexture(TextureType.SPECULAR, textureResource.getTexture(gl, "img/earth_map/earth_specular.png"));
 		globeNode.setTexture(TextureType.NORMAL, textureResource.getTexture(gl, "img/earth_map/earth_normal.png"));
 		
-		scene.addChild(globeNode);	
+		//use this to orbit globe, and attach moon node to it
+		var moonOrbitNode = scene.createNode();
+		moonOrbitNode.setOrigin(-5.0, 0.0, 0.0); //to scale moon should be 30x earth diamter
+		//TODO set rotation speed relative to earth
+		
+		var moonNode = scene.createNode();
+		moonNode.attachMesh(globeMesh);
+		moonNode.setScale(0.273, 0.273, 0.273);
+		moonNode.updateSelf = function(dt, sceneNode)
+		{
+			//TODO simulate moons orbital eccentricity?
+			moonNode.rotate(0.0, 78.0 * dt, 0.0);	
+		}
+
+		moonNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(gl, "img/moon_map/moon_colour.png"));
+		moonNode.setTexture(TextureType.NORMAL, textureResource.getTexture(gl, "img/moon_map/moon_normal.png"));
+		moonNode.setTexture(TextureType.SPECULAR, textureResource.getTexture(gl, "img/moon_map/moon_specular.png"));
+
+		moonOrbitNode.addChild(moonNode);
+		globeNode.addChild(moonOrbitNode);
+		scene.addChild(globeNode);
+
+
+		//create a skybox and add it to the scene
+		var images = [
+			"img/skybox/sky_posX.png",
+			"img/skybox/sky_negX.png",
+			"img/skybox/sky_posY.png",
+			"img/skybox/sky_negY.png",
+			"img/skybox/sky_posZ.png",
+			"img/skybox/sky_negZ.png"
+			];
+		var cubeMap = textureResource.getCubeMap(gl, images);
+
+		//create at least one camera for scene
+		var camera = new Camera(45.0, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0);
+		//moonNode.attachCamera(camera);
+		scene.setActiveCamera(camera);
 	}
 	
 	state.handleEvent = function()
@@ -44,6 +81,7 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		//this is a 'standard' view port - but you may need one or more
 		//custom viewports in a state, so gl.clear() needs to go here too
 		gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+		//TODO fetch viewport for active scene camera
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 		scene.draw(gl);

@@ -8,6 +8,7 @@ var TextureType = Object.freeze
 function TextureResource()
 {
 	var textures = [];
+	var cubeMaps = [];
 
 	this.getTexture = function(gl, textureName)
 	{
@@ -26,12 +27,30 @@ function TextureResource()
 		return texture;
 	}
 
-	this.clear = function(gl)
+	this.getCubeMap = function(gl, pathArray) //array of paths to images, +x, -x, +y, -y, +z, -z
+	{
+		for(var i = 0; i < cubeMaps.length; ++i)
+		{
+			if(cubeMaps[i].getName === pathArray[0])
+				return cubeMaps[i];
+		}
+
+		var cubeMap = new CubeMap(gl, pathArray);
+		cubeMaps.push(cubeMap);
+		return cubeMap;
+	}
+
+	this.clear = function()
 	{
 		for(var i = 0; i < textures.length; ++i)
 			textures[i].delete();
 
 		while(textures.length) textures.pop();
+
+		for(var i = 0; i < cubeMaps.length; ++i)
+			cubeMaps[i].delete();
+
+		while(cubeMaps.length) cubeMaps.pop();
 	}
 
 	//---------------------------------------------------------//
@@ -80,6 +99,60 @@ function TextureResource()
 		this.bind = function()
 		{
 			gl.bindTexture(gl.TEXTURE_2D, glTexture);
+		}
+
+		this.delete = function()
+		{
+			gl.deleteTexture(glTexture);
+		}
+	}
+
+	//---------------------------------------------------------//
+	function CubeMap(gl, imageArray) //must contain paths to 6 images, +x, -x, +y, -y, +z, -z
+	{
+		var glTexture = gl.createTexture();
+		//TODO create temp texture while loading?
+
+		gl.bindTexture(gl.TEXTURE_CUBE_MAP, glTexture);
+		gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+		var faces = [gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+					gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+					gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+					gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+					gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+					gl.TEXTURE_CUBE_MAP_NEGATIVE_Z]
+
+		for(var s = 0; s < 6; ++s)
+		{
+			var img = new Image();
+			var face = faces[s];
+			img.onload = function(glTexture, face, img)
+			{
+				return function()
+				{
+					gl.bindTexture(gl.TEXTURE_CUBE_MAP, glTexture);
+					gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+					gl.texImage2D(face, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+				}
+			}(glTexture, face, img);
+			img.src = imageArray[s];
+		}
+
+		gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+		
+		var name = imageArray[0];
+		this.getName = function()
+		{
+			return name;
+		}
+
+		this.bind = function()
+		{
+			gl.bindTexture(gl.TEXTURE_CUBE_MAP, glTexture);
 		}
 
 		this.delete = function()

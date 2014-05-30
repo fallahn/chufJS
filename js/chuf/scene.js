@@ -11,6 +11,8 @@ function Scene()
 	this.addChild = function(sceneNode)
 	{
 		rootChildren.push(sceneNode);
+		//don't need to set the root as parent as there's nothing
+		//a child needs to query
 	}
 
 	var UID = 0;
@@ -37,14 +39,21 @@ function Scene()
 			rootChildren.splice(i, 1); //TODO potential optimisation if IDs are concurrent
 	}
 
+	var activeCamera = null;
+	this.setActiveCamera = function(camera)
+	{
+		activeCamera = camera;
+	}
+
 	this.draw = function(gl)
 	{
-		//TODO move pMatrix to camera and only update when necessary
-		mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, rootMatrices.pMatrix);		
-
+		if(activeCamera)
+			rootMatrices.pMatrix = activeCamera.getProjectionMatrix();
+		else return;
+		
 		for(var j = 0; j < rootChildren.length; j++)
 		{
-			mat4.identity(rootMatrices.mvMatrix);
+			rootMatrices.mvMatrix = activeCamera.getTransform(); //TODO get the inverse of the camera transform
 			rootChildren[j].draw(gl, rootMatrices);
 		}
 	}
@@ -67,12 +76,51 @@ function Scene()
 		this.addChild = function(sceneNode)
 		{
 			children.push(sceneNode);
+			sceneNode.setParent(this);
+		}
+
+		var parent = null;
+		this.setParent = function(sceneNode)
+		{
+			parent = sceneNode;
+		}
+		this.getParent = function()
+		{
+			return parent;
 		}
 
 		var mesh = null;
 		this.attachMesh = function(meshComponent)
 		{
 			mesh = meshComponent;
+		}
+
+		//nodes carry own textures so multiple textures can be applied to shared meshes
+		var colourTexture = null;
+		var normalTexture = null;
+		var specularTexture = null;
+		this.setTexture = function(textureType, texture)
+		{
+			switch(textureType)
+			{
+			case TextureType.DIFFUSE:
+				colourTexture = texture;
+				break;
+			case TextureType.NORMAL:
+				normalTexture = texture;
+				break;
+			case TextureType.SPECULAR:
+				specularTexture = texture;
+				break;
+			default: break;
+			}
+		}
+
+		var camera = null;
+		this.attachCamera = function(cam)
+		{
+			camera = cam;
+			camera.setParent(this);
 		}
 
 		var rotation = vec3.create();
@@ -136,6 +184,24 @@ function Scene()
 		}
 
 		var mvMatrix = mat4.create();
+		this.getTransform = function()
+		{
+			return mvMatrix;
+		}
+
+		this.getWorldTransform = function()
+		{
+			var t = mat4.create();
+			mat4.identity(t);
+			for(var node = this; node != null; node = node.getParent())
+			{
+				mat4.multiply(t, node.getTransform());
+				//if(node != null)
+					//console.log(t[0]);
+			}
+			return t;
+		}
+
 		var updateMatrix = true;
 		this.update = function(dt, sceneNode)
 		{
@@ -147,7 +213,7 @@ function Scene()
 				mat4.rotate(mvMatrix, rotation[1], [0, 1, 0]);
 				mat4.rotate(mvMatrix, rotation[2], [0, 0, 1]);
 				mat4.rotate(mvMatrix, rotation[0], [1, 0, 0]);
-				//scale first if you weant to scale about the origin point (this will also scale the distance to the origin of course)
+				//scale first if you want to scale about the origin point (this will also scale the distance to the origin of course)
 				mat4.scale(mvMatrix, [scale[0], scale[1], scale[2]]);
 				mat4.translate(mvMatrix, [-origin[0], -origin[1], -origin[2]]);				
 				updateMatrix = false;
@@ -156,7 +222,6 @@ function Scene()
 			this.updateSelf(dt, sceneNode);
 			for(var k = 0; k < children.length; k++)
 				children[k].update(dt, children[k]);
-			
 		}
 
 		this.updateSelf = function(dt, sceneNode)
@@ -165,30 +230,9 @@ function Scene()
 			//see state creation in examples folder
 		}
 
-		//nodes carry own textures so multiple textures can be applied to shared meshes
-		var colourTexture = null;
-		var normalTexture = null;
-		var specularTexture = null;
-		this.setTexture = function(textureType, texture)
-		{
-			switch(textureType)
-			{
-			case TextureType.DIFFUSE:
-				colourTexture = texture;
-				break;
-			case TextureType.NORMAL:
-				normalTexture = texture;
-				break;
-			case TextureType.SPECULAR:
-				specularTexture = texture;
-				break;
-			default: break;
-			}
-		}
-
 		this.draw = function(gl, matrices)
 		{
-			matrices.mvMatrix = mat4.multiply(matrices.mvMatrix, mvMatrix);
+			mat4.multiply(matrices.mvMatrix, mvMatrix);
 			
 			if(mesh)
 			{

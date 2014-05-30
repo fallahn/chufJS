@@ -432,7 +432,7 @@ function MeshResource()
 			gl.drawElements(gl.TRIANGLES, indexBuffer.itemCount, gl.UNSIGNED_SHORT, 0);
 
 			//for drawing normals in debug
-			var drawNormals = true;
+			var drawNormals = false;
 			if(drawNormals && debugShader)
 			{
 				debugShader.bind();

@@ -1,0 +1,7 @@
+These textures were either taken or derived from textures found at
+
+http://planetpixelemporium.com/planets.html
+
+These textures are redistributed as resources as part of the simulation
+used as an example in chufJS. Please respect the original authors
+copyright (detailed at above link) when using/redistributing these files.

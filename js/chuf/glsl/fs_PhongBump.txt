@@ -17,8 +17,8 @@ uniform sampler2D uNormalMap;
 //TODO make light params uniforms
 vec3 diffuseColour = vec3(0.8, 0.8, 0.8);
 vec3 ambientColour = vec3(0.01, 0.01, 0.01);
-vec3 specularColour = vec3(1.0, 1.0, 1.0);
-float shininess = 200.0;
+vec3 specularColour = vec3(1.0, 1.0, 0.7);
+float shininess = 20.0;
 
 void main(void)
 {
