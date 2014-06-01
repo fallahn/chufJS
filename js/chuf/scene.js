@@ -188,10 +188,11 @@ function Scene()
 		{
 			return mvMatrix;
 		}
-
+		var worldMatrix = mat4.create();
+		mat4.identity(worldMatrix);
 		this.getWorldTransform = function()
 		{
-			var t = mat4.create();
+			/*var t = mat4.create();
 			mat4.identity(t);
 			for(var node = this; node != null; node = node.getParent())
 			{
@@ -199,7 +200,8 @@ function Scene()
 				//if(node != null)
 					//console.log(t[0]);
 			}
-			return t;
+			return t;*/
+			return worldMatrix;
 		}
 
 		var updateMatrix = true;
@@ -233,6 +235,7 @@ function Scene()
 		this.draw = function(gl, matrices)
 		{
 			mat4.multiply(matrices.mvMatrix, mvMatrix);
+			mat4.set(matrices.mvMatrix, worldMatrix);
 			
 			if(mesh)
 			{

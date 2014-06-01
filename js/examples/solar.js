@@ -62,8 +62,16 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 
 		//create at least one camera for scene
 		var camera = new Camera(45.0, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0);
-		//moonNode.attachCamera(camera);
 		scene.setActiveCamera(camera);
+		//moonOrbitNode.attachCamera(camera);
+
+		var camNode = scene.createNode();
+		camNode.attachCamera(camera);
+		camNode.updateSelf = function(dt, sceneNode)
+		{
+		//	sceneNode.rotate(0.0, 10.0 * dt, 0.0);
+		}
+		scene.addChild(camNode);
 	}
 	
 	state.handleEvent = function()
