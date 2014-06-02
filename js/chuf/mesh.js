@@ -365,6 +365,7 @@ function MeshResource()
 		var colourTexture   = null;
 		var normalTexture   = null;
 		var specularTexture = null;
+		var skyboxTexture   = null;
 		this.setTexture = function(textureType, texture)
 		{
 			switch(textureType)
@@ -378,6 +379,8 @@ function MeshResource()
 			case TextureType.SPECULAR:
 				specularTexture = texture;
 				break;
+			case TextureType.SKYBOX:
+				skyboxTexture = texture;
 			default: break;
 			}
 		}
@@ -385,13 +388,12 @@ function MeshResource()
 		var nMatrix = mat3.create();
 		this.draw = function(matrices)
 		{
-			//bind shader attrib buffers - TODO check and warn if not exist
+			//bind shader attrib buffers
 			gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
 			gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.POSITION), 3, gl.FLOAT, false, 20, 0);
-			//gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
 			gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TEXCOORD), 2, gl.FLOAT, false, 20, 12);
 
-			if(normalBuffer)
+			if(shaderProgram.shaderName != ShaderName.SKYBOX && normalBuffer)
 			{
 				gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
 				gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.NORMAL), normalBuffer.itemSize, gl.FLOAT, false, 36, 0);
@@ -419,15 +421,21 @@ function MeshResource()
 				shaderProgram.setUniformTexture(ShaderUniform.NORMALMAP, normalTexture);
 			}		
 			
-			//var matrix = mat4.create();
-			//mat4.multiply(matrices.camMatrix, matrices.mvMatrix, matrix);
+			if(skyboxTexture)
+			{
+				shaderProgram.setUniformTexture(ShaderUniform.SKYBOXMAP, skyboxTexture);
+			}
+
 			shaderProgram.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
-			shaderProgram.setUniformMat4(ShaderUniform.CMAT, matrices.camMatrix);
 			shaderProgram.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
 			
-			mat4.toInverseMat3(matrices.mvMatrix, nMatrix);
-			mat3.transpose(nMatrix);
-			shaderProgram.setUniformMat3(ShaderUniform.NMAT, nMatrix);
+			if(shaderProgram.shaderName != ShaderName.SKYBOX)
+			{
+				shaderProgram.setUniformMat4(ShaderUniform.CMAT, matrices.camMatrix);
+				mat4.toInverseMat3(matrices.mvMatrix, nMatrix);
+				mat3.transpose(nMatrix);
+				shaderProgram.setUniformMat3(ShaderUniform.NMAT, nMatrix);
+			}
 
 			//bind element buffer and draw
 			shaderProgram.bind();			

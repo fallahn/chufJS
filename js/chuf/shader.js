@@ -6,7 +6,8 @@ var ShaderName = Object.freeze
 ({
 	PHONG     : 0,
 	NORMALMAP : 1,
-	DEBUG     : 2
+	DEBUG     : 2,
+	SKYBOX    : 3
 })
 
 var ShaderType = Object.freeze
@@ -35,7 +36,8 @@ var ShaderUniform = Object.freeze
 	//maps
 	COLOURMAP   : 4,
 	NORMALMAP   : 5,
-	SPECULARMAP : 6
+	SPECULARMAP : 6,
+	SKYBOXMAP   : 7
 })
 
 function ShaderResource()
@@ -84,6 +86,10 @@ function ShaderResource()
 		case ShaderName.DEBUG:
 			fragShader = getShader(gl, readFile("/js/chuf/glsl/fs_Debug.txt"), ShaderType.FRAGMENT);
 			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_Debug.txt"), ShaderType.VERTEX);
+		break;
+		case ShaderName.SKYBOX:
+			fragShader = getShader(gl, readFile("/js/chuf/glsl/fs_SkyBox.txt"), ShaderType.FRAGMENT);
+			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_CubeMap.txt"), ShaderType.VERTEX);
 		break;
 		default:
 		//TODO allow for custom shaders
@@ -226,12 +232,13 @@ function ShaderResource()
 		var colourmapUniformLocation   = null;
 		var normalmapUniformLocation   = null;
 		var specularmapUniformLocation = null;
+		var skyboxmapUniformLocation   = null;
 
 		var uniforms = [];
 		function getUniformLocation(name)
 		{
 			//switch block may be unweildy but it replaces string comparison
-			//with integer commparison
+			//with integer comparison
 			switch(name)
 			{
 			case ShaderUniform.PMAT:
@@ -262,6 +269,10 @@ function ShaderResource()
 				if(specularmapUniformLocation == null)
 					specularmapUniformLocation = gl.getUniformLocation(program, "uSpecularMap");
 			return specularmapUniformLocation;
+			case ShaderUniform.SKYBOXMAP:
+				if(skyboxmapUniformLocation == null)
+					skyboxmapUniformLocation = gl.getUniformLocation(program, "uSkyboxMap");
+			return skyboxmapUniformLocation;
 			default:
 				console.log("unable to find shader uniform");
 			return -1;

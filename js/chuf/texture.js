@@ -2,7 +2,8 @@ var TextureType = Object.freeze
 ({
 	DIFFUSE  : 0,
 	NORMAL   : 1,
-	SPECULAR : 2
+	SPECULAR : 2,
+	SKYBOX   : 3
 })
 
 function TextureResource()
@@ -128,20 +129,26 @@ function TextureResource()
 
 		for(var s = 0; s < 6; ++s)
 		{
+			//create temp texture data while images load
+			gl.bindTexture(gl.TEXTURE_CUBE_MAP, glTexture);
+			gl.texImage2D(faces[s], 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 0, 255, 255]));
+			gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+
 			var img = new Image();
+			img.src = imageArray[s];	
+
 			var face = faces[s];
-			img.onload = function(glTexture, face, img)
+			img.onload = function(texture, face, img)
 			{
 				return function()
 				{
-					gl.bindTexture(gl.TEXTURE_CUBE_MAP, glTexture);
 					gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+					gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
 					gl.texImage2D(face, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+					gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 				}
 			}(glTexture, face, img);
-			img.src = imageArray[s];
 		}
-
 		gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 		
 		var name = imageArray[0];

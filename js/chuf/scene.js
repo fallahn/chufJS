@@ -1,5 +1,12 @@
 function Scene()
 {
+	var skybox = null;
+	this.setSkybox = function(sbox)
+	{
+		skybox = sbox;
+	}
+
+
 	//root node of the scene, main draw calls passed down to children
 	var rootMatrices =
 	{
@@ -59,6 +66,24 @@ function Scene()
 			return;
 		}
 		
+
+		//skybox
+		if(skybox)
+		{
+			gl.enable(gl.CULL_FACE);
+			gl.cullFace(gl.FRONT);
+			gl.disable(gl.DEPTH_TEST);
+			mat4.set(rootMatrices.camMatrix, rootMatrices.mvMatrix);
+			//nerf translation
+			rootMatrices.mvMatrix[12] = 0.0;
+			rootMatrices.mvMatrix[13] = 0.0;
+			rootMatrices.mvMatrix[14] = 0.0;
+			skybox.draw(rootMatrices);
+		}
+
+		//graph nodes
+		gl.cullFace(gl.BACK);
+		gl.enable(gl.DEPTH_TEST);
 		for(var j = 0; j < rootChildren.length; j++)
 		{
 			mat4.identity(rootMatrices.mvMatrix);
