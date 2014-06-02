@@ -3,8 +3,9 @@ function Scene()
 	//root node of the scene, main draw calls passed down to children
 	var rootMatrices =
 	{
-		pMatrix : mat4.create(),
-		mvMatrix : mat4.create()
+		pMatrix   : mat4.create(),
+		mvMatrix  : mat4.create(),
+		camMatrix : mat4.create()
 	}
 	
 	var rootChildren = [];
@@ -48,12 +49,19 @@ function Scene()
 	this.draw = function(gl)
 	{
 		if(activeCamera)
+		{
 			rootMatrices.pMatrix = activeCamera.getProjectionMatrix();
-		else return;
+			rootMatrices.camMatrix = activeCamera.getTransform();
+		}
+		else
+		{
+			console.log("WARNING: scene has no active camera");
+			return;
+		}
 		
 		for(var j = 0; j < rootChildren.length; j++)
 		{
-			rootMatrices.mvMatrix = activeCamera.getTransform(); //TODO get the inverse of the camera transform
+			mat4.identity(rootMatrices.mvMatrix);
 			rootChildren[j].draw(gl, rootMatrices);
 		}
 	}
@@ -189,18 +197,8 @@ function Scene()
 			return mvMatrix;
 		}
 		var worldMatrix = mat4.create();
-		mat4.identity(worldMatrix);
 		this.getWorldTransform = function()
 		{
-			/*var t = mat4.create();
-			mat4.identity(t);
-			for(var node = this; node != null; node = node.getParent())
-			{
-				mat4.multiply(t, node.getTransform());
-				//if(node != null)
-					//console.log(t[0]);
-			}
-			return t;*/
 			return worldMatrix;
 		}
 

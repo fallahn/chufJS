@@ -12,21 +12,15 @@ function Camera(fov, aspectRatio, nearPlane, farPlane)
 
 	this.getProjectionMatrix = function()
 	{
-		//mat4.perspective(fov, aspectRatio, nearPlane, farPlane, pMatrix);
-		//return mat4.multiply(pMatrix, parent.getWorldTransform());
 		return pMatrix;
 	}
 
 	var inverseMVMatrix = mat4.create(); //this is what we return after node transform
-	
 	this.getTransform = function()
 	{
 		if(parent)
-		{
-			mat4.identity(inverseMVMatrix);			
-			//inverseMatrix = parent.getWorldTransform();
-
-			//parentNode.getTransform();
+		{		
+			mat4.inverse(parent.getWorldTransform(), inverseMVMatrix);
 		}
 		else
 		{
@@ -34,7 +28,6 @@ function Camera(fov, aspectRatio, nearPlane, farPlane)
 		}
 		return inverseMVMatrix;
 	}
-
 
 	var parent = null;
 	this.setParent = function(sceneNode)

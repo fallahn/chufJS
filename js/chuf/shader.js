@@ -30,11 +30,12 @@ var ShaderUniform = Object.freeze
 	//matrices
 	PMAT        : 0,
 	MVMAT       : 1,
-	NMAT        : 2,
+	CMAT        : 2,
+	NMAT        : 3,
 	//maps
-	COLOURMAP   : 3,
-	NORMALMAP   : 4,
-	SPECULARMAP : 5
+	COLOURMAP   : 4,
+	NORMALMAP   : 5,
+	SPECULARMAP : 6
 })
 
 function ShaderResource()
@@ -220,6 +221,7 @@ function ShaderResource()
 
 		var pMatUniformLocation  = null;
 		var mvMatUniformLocation = null;
+		var cMatUniformLocation  = null;
 		var nMatUniformLocation  = null;
 		var colourmapUniformLocation   = null;
 		var normalmapUniformLocation   = null;
@@ -240,6 +242,10 @@ function ShaderResource()
 				if(mvMatUniformLocation == null)
 					mvMatUniformLocation = gl.getUniformLocation(program, "uMVMat");
 			return mvMatUniformLocation;
+			case ShaderUniform.CMAT:
+				if(cMatUniformLocation == null)
+					cMatUniformLocation = gl.getUniformLocation(program, "uCMat");
+			return cMatUniformLocation;
 			case ShaderUniform.NMAT:
 				if(nMatUniformLocation == null)
 					nMatUniformLocation = gl.getUniformLocation(program, "uNMat");

@@ -419,7 +419,10 @@ function MeshResource()
 				shaderProgram.setUniformTexture(ShaderUniform.NORMALMAP, normalTexture);
 			}		
 			
+			//var matrix = mat4.create();
+			//mat4.multiply(matrices.camMatrix, matrices.mvMatrix, matrix);
 			shaderProgram.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
+			shaderProgram.setUniformMat4(ShaderUniform.CMAT, matrices.camMatrix);
 			shaderProgram.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
 			
 			mat4.toInverseMat3(matrices.mvMatrix, nMatrix);
@@ -437,6 +440,7 @@ function MeshResource()
 			{
 				debugShader.bind();
 				debugShader.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
+				debugShader.setUniformMat4(ShaderUniform.CMAT, matrices.camMatrix);
 				debugShader.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
 
 				gl.bindBuffer(gl.ARRAY_BUFFER, debugBuffer);

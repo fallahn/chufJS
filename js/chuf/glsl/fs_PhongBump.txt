@@ -29,8 +29,10 @@ void main(void)
 	vec3 eyeDir = normalize(vEyeVec);
 	vec3 reflectDir = reflect(-lightDir, bump);
 
-	float specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), shininess) * texture2D(uSpecularMap, vTexCoord.xy).r;
+	float specAmount = 0.0;
 	float diffuseAmount = max(dot(bump, lightDir), 0.0);
+	if(diffuseAmount > 0.0)
+		specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), shininess) * texture2D(uSpecularMap, vTexCoord.xy).r;
 
 	vec3 finalColour = ambientColour + (baseColour.rgb * diffuseAmount) + (specularColour * specAmount);
 	gl_FragColor = vec4(finalColour, baseColour.a);

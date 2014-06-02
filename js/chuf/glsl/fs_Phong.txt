@@ -25,8 +25,10 @@ void main(void)
 	vec3 eyeDir = normalize(-vPosition.xyz);
 	vec3 reflectDir = reflect(-lightDir, normal);
 
-	float specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), shininess);
+	float specAmount = 0.0;
 	float diffuseAmount = max(dot(normal, lightDir), 0.0);
+	if(diffuseAmount > 0.0)
+		specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), shininess);
 
 	vec4 diffuseColour = texture2D(uColourMap, vTexCoord.xy);
 	vec3 finalColour = ambientColour + (diffuseColour.rgb * diffuseAmount) + (specularColour * specAmount);

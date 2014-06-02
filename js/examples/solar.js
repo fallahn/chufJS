@@ -28,7 +28,7 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		
 		//use this to orbit globe, and attach moon node to it
 		var moonOrbitNode = scene.createNode();
-		moonOrbitNode.setOrigin(-5.0, 0.0, 0.0); //to scale moon should be 30x earth diamter
+		moonOrbitNode.setOrigin(0.0, 0.0, -5.0); //to scale moon should be 30x earth diamter
 		//TODO set rotation speed relative to earth
 		
 		var moonNode = scene.createNode();
@@ -37,7 +37,7 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		moonNode.updateSelf = function(dt, sceneNode)
 		{
 			//TODO simulate moons orbital eccentricity?
-			moonNode.rotate(0.0, 78.0 * dt, 0.0);	
+			//moonNode.rotate(0.0, 78.0 * dt, 0.0);	
 		}
 
 		moonNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(gl, "img/moon_map/moon_colour.png"));
@@ -63,13 +63,13 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		//create at least one camera for scene
 		var camera = new Camera(45.0, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0);
 		scene.setActiveCamera(camera);
-		//moonOrbitNode.attachCamera(camera);
+		//moonNode.attachCamera(camera);
 
 		var camNode = scene.createNode();
 		camNode.attachCamera(camera);
 		camNode.updateSelf = function(dt, sceneNode)
 		{
-		//	sceneNode.rotate(0.0, 10.0 * dt, 0.0);
+			//sceneNode.rotate(0.0, 0.0, 10.0 * dt);
 		}
 		scene.addChild(camNode);
 	}
@@ -86,8 +86,6 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 
 	state.draw = function()
 	{
-		//this is a 'standard' view port - but you may need one or more
-		//custom viewports in a state, so gl.clear() needs to go here too
 		gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 		//TODO fetch viewport for active scene camera
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

@@ -13,6 +13,7 @@ attribute vec3 aBitan;
 
 uniform mat4 uMVMat;
 uniform mat4 uPMat;
+uniform mat4 uCMat; //camera transform
 uniform mat3 uNMat;
 
 varying vec3 vLightVec;
@@ -23,7 +24,7 @@ vec3 lightPosition = vec3(8.0, 0.2, 3.0); //TODO make this a uniform
 
 void main(void)
 {
-	vec4 viewVert = uMVMat * vec4(aPosition, 1.0);
+	vec4 viewVert = uCMat * uMVMat * vec4(aPosition, 1.0);
 	gl_Position = uPMat * viewVert;
 	vTexCoord = aTexCoord;
 
