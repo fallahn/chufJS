@@ -83,6 +83,9 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 			//sceneNode.move(0.0, 1.0 * dt, 0.0);
 		}
 		scene.addChild(camNode);
+
+		var light = scene.addLight();
+		camNode.attachLight(light);
 	}
 	
 	state.handleEvent = function()

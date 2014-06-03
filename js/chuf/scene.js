@@ -1,5 +1,23 @@
 function Scene()
 {
+	var lights = [];
+	var maxLights = 8;
+	this.addLight = function()
+	{
+		if(lights.length < maxLights)
+		{
+			//TODO pass render texture size to light for shadow map
+			var light = new Light();
+			lights.push(light);
+			return light;
+		}
+		else
+		{
+			console.log("WARNING: max light count reached, failed to create light");
+			return null;
+		}
+	}
+
 	var skybox = null;
 	this.setSkybox = function(sbox)
 	{
@@ -95,6 +113,8 @@ function Scene()
 	{
 		while(rootChildren.length)
 			rootChildren.pop();
+		while(lights.length)
+			lights.pop();
 		UID = 0;
 	}
 
@@ -126,6 +146,7 @@ function Scene()
 		this.attachMesh = function(meshComponent)
 		{
 			mesh = meshComponent;
+			mesh.setLights(lights);
 		}
 
 		//nodes carry own textures so multiple textures can be applied to shared meshes
@@ -149,11 +170,14 @@ function Scene()
 			}
 		}
 
-		var camera = null;
-		this.attachCamera = function(cam)
+		this.attachCamera = function(camera)
 		{
-			camera = cam;
 			camera.setParent(this);
+		}
+
+		this.attachLight = function(light)
+		{
+			light.setParent(this);
 		}
 
 		var rotation = vec3.create();
@@ -165,7 +189,7 @@ function Scene()
 		{
 			rotation[0] = toRad(x);
 			rotation[1] = toRad(y);
-			rotation[2]= toRad(z);
+			rotation[2] = toRad(z);
 			updateMatrix = true;
 		}
 
@@ -183,6 +207,21 @@ function Scene()
 			position[1] = y;
 			position[2] = z;
 			updateMatrix = true;
+		}
+
+		this.getPosition = function()
+		{
+			return position;
+		}
+
+		this.getWorldPosition = function()
+		{
+			var position = vec3.create();
+			for(var node = this; node != null; node = node.getParent())
+			{
+				vec3.add(node.getPosition(), position);
+			}
+			return position;
 		}
 
 		this.move = function(x, y, z)

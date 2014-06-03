@@ -37,7 +37,9 @@ var ShaderUniform = Object.freeze
 	COLOURMAP   : 4,
 	NORMALMAP   : 5,
 	SPECULARMAP : 6,
-	SKYBOXMAP   : 7
+	SKYBOXMAP   : 7,
+
+	LIGHTS		: 8
 })
 
 function ShaderResource()

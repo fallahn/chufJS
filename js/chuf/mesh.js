@@ -385,6 +385,12 @@ function MeshResource()
 			}
 		}
 
+		var lights = [];
+		this.setLights = function(lightArr)
+		{
+			lights = lightArr;
+		}
+
 		var nMatrix = mat3.create();
 		this.draw = function(matrices)
 		{
