@@ -1,3 +1,9 @@
+var RenderPass = Object.freeze
+({
+	SHADOW : 0,
+	FINAL  : 1
+});
+
 function Scene()
 {
 	/*
@@ -79,39 +85,49 @@ function Scene()
 
 	this.draw = function(gl)
 	{
-		if(activeCamera)
-		{
-			rootMatrices.pMatrix = activeCamera.getProjectionMatrix();
-			rootMatrices.camMatrix = activeCamera.getTransform();
-		}
-		else
+		if(!activeCamera)
 		{
 			console.log("WARNING: scene has no active camera");
 			return;
 		}
-		
 
+		gl.enable(gl.CULL_FACE);
+		gl.cullFace(gl.FRONT);		
+
+		//---------shadow pass-----------
+		rootMatrices.pMatrix = lights[0].getProjection(); //TODO this isn't set yet!
+		rootMatrices.camMatrix = lights[0].getTransform(); //TODO node needs a 'lookat' function
+		for(var z = 0; z < rootChildren.length; ++z)
+		{
+			mat4.identity(rootMatrices.mvMatrix);
+			rootChildren[z].draw(gl, rootMatrices, lights, RenderPass.SHADOW);
+		}
+
+
+		//----------final pass-----------
 		//skybox
 		if(skybox)
 		{
-			gl.enable(gl.CULL_FACE);
-			gl.cullFace(gl.FRONT);
 			gl.disable(gl.DEPTH_TEST);
 			mat4.set(rootMatrices.camMatrix, rootMatrices.mvMatrix);
 			//nerf translation
 			rootMatrices.mvMatrix[12] = 0.0;
 			rootMatrices.mvMatrix[13] = 0.0;
 			rootMatrices.mvMatrix[14] = 0.0;
-			skybox.draw(rootMatrices);
+			skybox.draw(rootMatrices, null, null);
 		}
 
 		//graph nodes
 		gl.cullFace(gl.BACK);
 		gl.enable(gl.DEPTH_TEST);
+		//set projection matrix back to camera from light
+		rootMatrices.pMatrix = activeCamera.getProjectionMatrix();
+		rootMatrices.camMatrix = activeCamera.getTransform();
+
 		for(var j = 0; j < rootChildren.length; j++)
 		{
 			mat4.identity(rootMatrices.mvMatrix);
-			rootChildren[j].draw(gl, rootMatrices, lights);
+			rootChildren[j].draw(gl, rootMatrices, lights, RenderPass.FINAL);
 		}
 	}
 
@@ -297,7 +313,7 @@ function Scene()
 			//see state creation in examples folder
 		}
 
-		this.draw = function(gl, matrices, lights)
+		this.draw = function(gl, matrices, lights, renderPass)
 		{
 			mat4.multiply(matrices.mvMatrix, mvMatrix);
 			mat4.set(matrices.mvMatrix, worldMatrix);
@@ -317,11 +333,11 @@ function Scene()
 				{
 					mesh.setTexture(TextureType.SPECULAR, specularTexture);
 				}
-				mesh.draw(matrices, lights[0]);
+				mesh.draw(matrices, lights[0], renderPass);
 			}
 
 			for(var l = 0; l < children.length; ++l)
-				children[l].draw(gl, matrices, lights);
+				children[l].draw(gl, matrices, lights, renderPass);
 		}
 
 		var isDeleted = false;

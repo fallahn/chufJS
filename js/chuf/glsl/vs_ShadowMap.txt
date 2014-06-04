@@ -1,0 +1,17 @@
+//////////////////////////////////////
+// vertex shader for shadow map render
+//////////////////////////////////////
+
+//GLES 1.0 / WebGL
+
+#version 100
+
+attribute vec3 aPosition;
+
+uniform mat4 uPMat;
+uniform mat4 uMVMat;
+
+void main()
+{
+	gl_Position = uPMat * uMVMat * vec4(aPosition, 1.0);
+}

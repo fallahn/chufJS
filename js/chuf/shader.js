@@ -7,14 +7,15 @@ var ShaderName = Object.freeze
 	PHONG     : 0,
 	NORMALMAP : 1,
 	DEBUG     : 2,
-	SKYBOX    : 3
-})
+	SKYBOX    : 3,
+	SHADOWMAP : 4
+});
 
 var ShaderType = Object.freeze
 ({
 	VERTEX    : 0,
 	FRAGMENT  : 1
-})
+});
 
 var ShaderAttribute = Object.freeze
 ({
@@ -24,7 +25,7 @@ var ShaderAttribute = Object.freeze
 	TANGENT   : 3,
 	BITANGENT : 4,
 	COLOUR    : 5
-})
+});
 
 var ShaderUniform = Object.freeze
 ({
@@ -43,7 +44,7 @@ var ShaderUniform = Object.freeze
 	LIGHT_SPEC  : 9,
 	LIGHT_DIFF  : 10,
 	LIGHT_AMB   : 11
-})
+});
 
 function ShaderResource()
 {
@@ -95,6 +96,10 @@ function ShaderResource()
 		case ShaderName.SKYBOX:
 			fragShader = getShader(gl, readFile("/js/chuf/glsl/fs_SkyBox.txt"), ShaderType.FRAGMENT);
 			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_CubeMap.txt"), ShaderType.VERTEX);
+		break;
+		case ShaderName.SHADOWMAP:
+			fragShader = getShader(gl, readFile("/js/chuf/glsl/fs_ShadowMap.txt"), ShaderType.FRAGMENT);
+			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_ShadowMap.txt"), ShderType.VERTEX);
 		break;
 		default:
 		//TODO allow for custom shaders

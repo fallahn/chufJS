@@ -392,80 +392,92 @@ function MeshResource()
 		}
 
 		var nMatrix = mat3.create();
-		this.draw = function(matrices, lightSource)
+		this.draw = function(matrices, lightSource, renderPass)
 		{
-			//bind shader attrib buffers
-			gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-			gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.POSITION), 3, gl.FLOAT, false, 20, 0);
-			gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TEXCOORD), 2, gl.FLOAT, false, 20, 12);
-
-			if(shaderProgram.shaderName != ShaderName.SKYBOX && normalBuffer)
+			switch(renderPass)
 			{
-				gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-				gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.NORMAL), normalBuffer.itemSize, gl.FLOAT, false, 36, 0);
+			case RenderPass.SHADOW:
+				
+			break;
+			case RenderPass.FINAL:
+				//bind shader attrib buffers
+				gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+				gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.POSITION), 3, gl.FLOAT, false, 20, 0);
+				gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TEXCOORD), 2, gl.FLOAT, false, 20, 12);
 
-				shaderProgram.setUniformVec3(ShaderUniform.LIGHT_POS, lightSource.getPosition());
-				shaderProgram.setUniformVec3(ShaderUniform.LIGHT_SPEC, lightSource.specular);
-				shaderProgram.setUniformVec3(ShaderUniform.LIGHT_DIFF, lightSource.diffuse);
-				shaderProgram.setUniformVec3(ShaderUniform.LIGHT_AMB, lightSource.ambient);
-
-				if(shaderProgram.shaderName === ShaderName.NORMALMAP)
+				if(shaderProgram.shaderName != ShaderName.SKYBOX && normalBuffer)
 				{
-					//bind normal tangents
-					gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TANGENT), normalBuffer.itemSize, gl.FLOAT, false, 36, 12);
-					gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.BITANGENT), normalBuffer.itemSize, gl.FLOAT, false, 36, 24);
+					gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+					gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.NORMAL), normalBuffer.itemSize, gl.FLOAT, false, 36, 0);
+
+					shaderProgram.setUniformVec3(ShaderUniform.LIGHT_POS, lightSource.getPosition());
+					shaderProgram.setUniformVec3(ShaderUniform.LIGHT_SPEC, lightSource.specular);
+					shaderProgram.setUniformVec3(ShaderUniform.LIGHT_DIFF, lightSource.diffuse);
+					shaderProgram.setUniformVec3(ShaderUniform.LIGHT_AMB, lightSource.ambient);
+
+					if(shaderProgram.shaderName === ShaderName.NORMALMAP)
+					{
+						//bind normal tangents
+						gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TANGENT), normalBuffer.itemSize, gl.FLOAT, false, 36, 12);
+						gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.BITANGENT), normalBuffer.itemSize, gl.FLOAT, false, 36, 24);
+					}
+				}			
+
+				//set shader uniforms
+				if(colourTexture)
+				{
+					shaderProgram.setUniformTexture(ShaderUniform.COLOURMAP, colourTexture);
 				}
-			}			
+				if(specularTexture)
+				{
+					shaderProgram.setUniformTexture(ShaderUniform.SPECULARMAP, specularTexture);
+				}
 
-			//set shader uniforms
-			if(colourTexture)
-			{
-				shaderProgram.setUniformTexture(ShaderUniform.COLOURMAP, colourTexture);
-			}
-			if(specularTexture)
-			{
-				shaderProgram.setUniformTexture(ShaderUniform.SPECULARMAP, specularTexture);
-			}
+				if(normalTexture)
+				{
+					shaderProgram.setUniformTexture(ShaderUniform.NORMALMAP, normalTexture);
+				}		
+				
+				if(skyboxTexture)
+				{
+					shaderProgram.setUniformTexture(ShaderUniform.SKYBOXMAP, skyboxTexture);
+				}
 
-			if(normalTexture)
-			{
-				shaderProgram.setUniformTexture(ShaderUniform.NORMALMAP, normalTexture);
-			}		
-			
-			if(skyboxTexture)
-			{
-				shaderProgram.setUniformTexture(ShaderUniform.SKYBOXMAP, skyboxTexture);
-			}
+				shaderProgram.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
+				shaderProgram.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
+				
+				if(shaderProgram.shaderName != ShaderName.SKYBOX)
+				{
+					shaderProgram.setUniformMat4(ShaderUniform.CMAT, matrices.camMatrix);
+					mat4.toInverseMat3(matrices.mvMatrix, nMatrix);
+					mat3.transpose(nMatrix);
+					shaderProgram.setUniformMat3(ShaderUniform.NMAT, nMatrix);
+				}
 
-			shaderProgram.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
-			shaderProgram.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
-			
-			if(shaderProgram.shaderName != ShaderName.SKYBOX)
-			{
-				shaderProgram.setUniformMat4(ShaderUniform.CMAT, matrices.camMatrix);
-				mat4.toInverseMat3(matrices.mvMatrix, nMatrix);
-				mat3.transpose(nMatrix);
-				shaderProgram.setUniformMat3(ShaderUniform.NMAT, nMatrix);
-			}
+				//bind element buffer and draw
+				shaderProgram.bind();			
+				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+				gl.drawElements(gl.TRIANGLES, indexBuffer.itemCount, gl.UNSIGNED_SHORT, 0);
 
-			//bind element buffer and draw
-			shaderProgram.bind();			
-			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-			gl.drawElements(gl.TRIANGLES, indexBuffer.itemCount, gl.UNSIGNED_SHORT, 0);
+				//for drawing normals in debug
+				var drawNormals = false;
+				if(drawNormals && debugShader)
+				{
+					debugShader.bind();
+					debugShader.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
+					debugShader.setUniformMat4(ShaderUniform.CMAT, matrices.camMatrix);
+					debugShader.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
 
-			//for drawing normals in debug
-			var drawNormals = false;
-			if(drawNormals && debugShader)
-			{
-				debugShader.bind();
-				debugShader.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
-				debugShader.setUniformMat4(ShaderUniform.CMAT, matrices.camMatrix);
-				debugShader.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
-
-				gl.bindBuffer(gl.ARRAY_BUFFER, debugBuffer);
-				gl.vertexAttribPointer(debugShader.getAttribute(ShaderAttribute.POSITION), 3, gl.FLOAT, false, 28, 0);
-				gl.vertexAttribPointer(debugShader.getAttribute(ShaderAttribute.COLOUR), 4, gl.FLOAT, false, 28, 12);
-				gl.drawArrays(gl.LINES, 0, debugBuffer.itemCount);
+					gl.bindBuffer(gl.ARRAY_BUFFER, debugBuffer);
+					gl.vertexAttribPointer(debugShader.getAttribute(ShaderAttribute.POSITION), 3, gl.FLOAT, false, 28, 0);
+					gl.vertexAttribPointer(debugShader.getAttribute(ShaderAttribute.COLOUR), 4, gl.FLOAT, false, 28, 12);
+					gl.drawArrays(gl.LINES, 0, debugBuffer.itemCount);
+				}
+				break;
+			case null: break;
+			default:
+				console.log("WARNING: invalid renderpass type");
+				break;
 			}
 
 			//console.log(shaderProgram.shaderName);

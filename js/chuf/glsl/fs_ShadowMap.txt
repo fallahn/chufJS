@@ -1,0 +1,21 @@
+////////////////////////////////////////////////////////
+// fragment shader for packing zdepth into colour buffer
+////////////////////////////////////////////////////////
+
+//GLES 1.0 / WebGL
+
+#version 100
+
+highp vec4 pack(const in highp float depth)
+{
+	const highp vec4 bitshift(16777216.0, 65536.0, 256.0, 1.0);
+	const highp vec4 bitmask(0.0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0);
+	highp vec4 result = fract(depth * bitshift);
+	result -= result.xxyz * bitmask;
+	return result;
+}
+
+void main()
+{
+	gl_FragColor = pack(gl_FragCoord.z);
+}

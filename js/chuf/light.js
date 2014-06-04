@@ -40,7 +40,7 @@ function Light()
 	}
 
 	var pMatrix = mat4.create();
-	mat4.identity(pMatrix);
+	mat4.perspective(45, 1.0, 800, 800, pMatrix);
 	this.getProjection = function()
 	{
 		//projection matrix for shadow map shader
@@ -51,6 +51,7 @@ function Light()
 	{
 		//TODO decide on how we want to set these planes - smaller difference gives 
 		//better accuracy, but bigger risk of missing objects in shadow map
+		//TODO decide if we prefer orthogonal?
 		mat4.perspective(fov, width / height, width, height, 0, 50, pMatrix);
 	}
 }
