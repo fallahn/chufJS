@@ -38,8 +38,11 @@ var ShaderUniform = Object.freeze
 	NORMALMAP   : 5,
 	SPECULARMAP : 6,
 	SKYBOXMAP   : 7,
-
-	LIGHTS		: 8
+	//lighting
+	LIGHT_POS	: 8,
+	LIGHT_SPEC  : 9,
+	LIGHT_DIFF  : 10,
+	LIGHT_AMB   : 11
 })
 
 function ShaderResource()
@@ -235,6 +238,10 @@ function ShaderResource()
 		var normalmapUniformLocation   = null;
 		var specularmapUniformLocation = null;
 		var skyboxmapUniformLocation   = null;
+		var lightPosUniformLocation  = null;
+		var lightSpecUniformLocation = null;
+		var lightDiffUniformLocation = null;
+		var lightAmbUniformLocation  = null;
 
 		var uniforms = [];
 		function getUniformLocation(name)
@@ -275,6 +282,22 @@ function ShaderResource()
 				if(skyboxmapUniformLocation == null)
 					skyboxmapUniformLocation = gl.getUniformLocation(program, "uSkyboxMap");
 			return skyboxmapUniformLocation;
+			case ShaderUniform.LIGHT_POS:
+				if(lightPosUniformLocation == null)
+					lightPosUniformLocation = gl.getUniformLocation(program, "uLightPosition");
+			return lightPosUniformLocation;
+			case ShaderUniform.LIGHT_SPEC:
+				if(lightSpecUniformLocation == null)
+					lightSpecUniformLocation = gl.getUniformLocation(program, "uSpecularColour");
+			return lightSpecUniformLocation;
+			case ShaderUniform.LIGHT_DIFF:
+				if(lightDiffUniformLocation == null)
+					lightDiffUniformLocation = gl.getUniformLocation(program, "uDiffuseColour");
+			return lightDiffUniformLocation;
+			case ShaderUniform.LIGHT_AMB:
+				if(lightAmbUniformLocation == null)
+					lightAmbUniformLocation = gl.getUniformLocation(program, "uAmbientColour");
+			return lightAmbUniformLocation;
 			default:
 				console.log("unable to find shader uniform");
 			return -1;

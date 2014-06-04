@@ -2,7 +2,7 @@
 // normal map shader with phong specular highlighting
 /////////////////////////////////////////////////////
 
-//GLES 2.0 / WebGL
+//GLES 1.0 / WebGL
 
 #version 100
 precision mediump float;
@@ -13,12 +13,9 @@ varying vec3 vEyeVec;
 uniform sampler2D uColourMap;
 uniform sampler2D uSpecularMap;
 uniform sampler2D uNormalMap;
-
-//TODO make light params uniforms
-vec3 diffuseColour = vec3(0.8, 0.8, 0.8);
-vec3 ambientColour = vec3(0.01, 0.01, 0.01);
-vec3 specularColour = vec3(1.0, 1.0, 0.7);
-float shininess = 20.0;
+uniform vec3 uSpecularColour;
+uniform vec3 uDiffuseColour;
+uniform vec3 uAmbientColour;
 
 void main(void)
 {
@@ -32,8 +29,11 @@ void main(void)
 	float specAmount = 0.0;
 	float diffuseAmount = max(dot(bump, lightDir), 0.0);
 	if(diffuseAmount > 0.0)
-		specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), shininess) * texture2D(uSpecularMap, vTexCoord.xy).r;
+	{
+		vec4 specSample = texture2D(uSpecularMap, vTexCoord.xy);
+		specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), specSample.g * 255.0) * specSample.r;
+	}
 
-	vec3 finalColour = ambientColour + (baseColour.rgb * diffuseAmount) + (specularColour * specAmount);
+	vec3 finalColour = uAmbientColour + (baseColour.rgb * diffuseAmount) + (uSpecularColour * specAmount);
 	gl_FragColor = vec4(finalColour, baseColour.a);
 }

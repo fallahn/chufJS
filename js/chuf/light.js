@@ -1,10 +1,12 @@
 //////////////////////////////////////////////////////////
-// creates a point light whic can attached to a scene node
+// creates a point light which can attached to a scene node
 //////////////////////////////////////////////////////////
 
 function Light()
 {
-	this.colour = vec4.create([1.0, 1.0, 1.0, 1.0]);
+	this.specular = vec3.create([1.0, 1.0, 0.7]);
+	this.diffuse  = vec3.create([0.8, 0.8, 0.8]);
+	this.ambient  = vec3.create([0.01, 0.01, 0.01]);
 
 	var parent = null;
 	this.setParent = function(sceneNode)

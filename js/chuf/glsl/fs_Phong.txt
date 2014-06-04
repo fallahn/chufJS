@@ -2,7 +2,7 @@
 // default phong shading with optional diffuse map
 //////////////////////////////////////////////////
 
-//GLES 2.0 / WebGL
+//GLES 1.0 / WebGL
 
 #version 100
 precision mediump float;
@@ -11,16 +11,18 @@ varying vec3 vNormal;
 varying vec4 vPosition;
 
 uniform sampler2D uColourMap;
-//uniform vec3 lightPosition;
+uniform sampler2D uSpecularMap;
 
-vec3 lightPosition = vec3(8.0, 8.0, 3.0); //TODO make uniforms
-vec3 ambientColour = vec3(0.05, 0.05, 0.05);
-vec3 specularColour = vec3(1.0, 1.0, 1.0);
-float shininess = 128.0; //0 - 255
+uniform vec3 uLightPosition;
+uniform vec3 uAmbientColour;
+uniform vec3 uDiffuseColour;
+uniform vec3 uSpecularColour;
+
+//float shininess = 128.0; //0 - 255
 
 void main(void)
 {
-	vec3 lightDir = normalize(lightPosition - vPosition.xyz);
+	vec3 lightDir = normalize(uLightPosition - vPosition.xyz);
 	vec3 normal = normalize(vNormal);
 	vec3 eyeDir = normalize(-vPosition.xyz);
 	vec3 reflectDir = reflect(-lightDir, normal);
@@ -28,10 +30,13 @@ void main(void)
 	float specAmount = 0.0;
 	float diffuseAmount = max(dot(normal, lightDir), 0.0);
 	if(diffuseAmount > 0.0)
-		specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), shininess);
+	{
+		vec4 specSample = texture2D(uSpecularMap, vTexCoord.xy);
+		specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), specSample.g * 255.0) * specSample.r;
+	}
 
 	vec4 diffuseColour = texture2D(uColourMap, vTexCoord.xy);
-	vec3 finalColour = ambientColour + (diffuseColour.rgb * diffuseAmount) + (specularColour * specAmount);
+	vec3 finalColour = uAmbientColour + (diffuseColour.rgb * diffuseAmount) + (uSpecularColour * specAmount);
 
 	gl_FragColor = vec4(finalColour, diffuseColour.a);
 }

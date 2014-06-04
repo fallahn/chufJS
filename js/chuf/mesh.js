@@ -392,7 +392,7 @@ function MeshResource()
 		}
 
 		var nMatrix = mat3.create();
-		this.draw = function(matrices)
+		this.draw = function(matrices, lightSource)
 		{
 			//bind shader attrib buffers
 			gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
@@ -403,6 +403,11 @@ function MeshResource()
 			{
 				gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
 				gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.NORMAL), normalBuffer.itemSize, gl.FLOAT, false, 36, 0);
+
+				shaderProgram.setUniformVec3(ShaderUniform.LIGHT_POS, lightSource.getPosition());
+				shaderProgram.setUniformVec3(ShaderUniform.LIGHT_SPEC, lightSource.specular);
+				shaderProgram.setUniformVec3(ShaderUniform.LIGHT_DIFF, lightSource.diffuse);
+				shaderProgram.setUniformVec3(ShaderUniform.LIGHT_AMB, lightSource.ambient);
 
 				if(shaderProgram.shaderName === ShaderName.NORMALMAP)
 				{

@@ -1,5 +1,11 @@
 function Scene()
 {
+	/*
+	Currently only the first light is used by forward shading
+	I plan to use multiple lights when deferred shading becomes available
+	in webgl 2.0
+	*/
+
 	var lights = [];
 	var maxLights = 8;
 	this.addLight = function()
@@ -105,7 +111,7 @@ function Scene()
 		for(var j = 0; j < rootChildren.length; j++)
 		{
 			mat4.identity(rootMatrices.mvMatrix);
-			rootChildren[j].draw(gl, rootMatrices);
+			rootChildren[j].draw(gl, rootMatrices, lights);
 		}
 	}
 
@@ -217,10 +223,7 @@ function Scene()
 		this.getWorldPosition = function()
 		{
 			var position = vec3.create();
-			for(var node = this; node != null; node = node.getParent())
-			{
-				vec3.add(node.getPosition(), position);
-			}
+			mat4.multiplyVec3(worldMatrix, position);
 			return position;
 		}
 
@@ -294,7 +297,7 @@ function Scene()
 			//see state creation in examples folder
 		}
 
-		this.draw = function(gl, matrices)
+		this.draw = function(gl, matrices, lights)
 		{
 			mat4.multiply(matrices.mvMatrix, mvMatrix);
 			mat4.set(matrices.mvMatrix, worldMatrix);
@@ -314,11 +317,11 @@ function Scene()
 				{
 					mesh.setTexture(TextureType.SPECULAR, specularTexture);
 				}
-				mesh.draw(matrices);
+				mesh.draw(matrices, lights[0]);
 			}
 
 			for(var l = 0; l < children.length; ++l)
-				children[l].draw(gl, matrices);
+				children[l].draw(gl, matrices, lights);
 		}
 
 		var isDeleted = false;

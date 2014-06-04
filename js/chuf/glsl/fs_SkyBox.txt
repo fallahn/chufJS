@@ -2,7 +2,7 @@
 // performs a cubmap lookup and outputs it
 ///////////////////////////////////////////
 
-//GLES 2.0 / WebGL
+//GLES 1.0 / WebGL
 
 #version 100
 
