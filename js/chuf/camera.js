@@ -21,6 +21,7 @@ function Camera(fov, aspectRatio, nearPlane, farPlane)
 		if(parent)
 		{		
 			mat4.inverse(parent.getWorldTransform(), inverseMVMatrix);
+			//inverseMVMatrix = parent.getWorldTransform();
 		}
 		else
 		{

@@ -83,6 +83,14 @@ function Scene()
 		activeCamera = camera;
 	}
 
+
+	var shadowMapTarget = null;
+	this.setShadowMap = function(shadowMap)
+	{
+		shadowMapTarget = shadowMap;
+	}
+
+
 	this.draw = function(gl)
 	{
 		if(!activeCamera)
@@ -90,40 +98,57 @@ function Scene()
 			console.log("WARNING: scene has no active camera");
 			return;
 		}
-
+		gl.enable(gl.DEPTH_TEST);
 		gl.enable(gl.CULL_FACE);
 		gl.cullFace(gl.FRONT);		
 
 		//---------shadow pass-----------
-		rootMatrices.pMatrix = lights[0].getProjection(); //TODO this isn't set yet!
-		rootMatrices.camMatrix = lights[0].getTransform(); //TODO node needs a 'lookat' function
-		for(var z = 0; z < rootChildren.length; ++z)
+		if(shadowMapTarget)
 		{
-			mat4.identity(rootMatrices.mvMatrix);
-			rootChildren[z].draw(gl, rootMatrices, lights, RenderPass.SHADOW);
+			gl.viewport(0, 0, shadowMapTarget.width, shadowMapTarget.height);
+			rootMatrices.pMatrix = lights[0].getProjection();			
+			for(var f = 0; f < 6; ++f)
+			{
+				shadowMapTarget.setActive(true, f);
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+				//rootMatrices.camMatrix = lights[0].getFaceTransform(f);
+				//mat4.scale(rootMatrices.camMatrix, [-1.0, -1.0, 1.0]);
+				
+				for(var z = 0; z < rootChildren.length; ++z)
+				{
+					mat4.identity(rootMatrices.mvMatrix);
+					rootChildren[z].draw(gl, rootMatrices, lights, RenderPass.SHADOW);
+				}
+			}
+			shadowMapTarget.setActive(false);
 		}
 
-
 		//----------final pass-----------
+		gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+		//TODO fetch viewport for active scene camera
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+		//set projection matrix back to camera from light
+		rootMatrices.pMatrix = activeCamera.getProjectionMatrix();
+		rootMatrices.camMatrix = activeCamera.getTransform();
+
 		//skybox
 		if(skybox)
 		{
+			
 			gl.disable(gl.DEPTH_TEST);
 			mat4.set(rootMatrices.camMatrix, rootMatrices.mvMatrix);
 			//nerf translation
 			rootMatrices.mvMatrix[12] = 0.0;
 			rootMatrices.mvMatrix[13] = 0.0;
 			rootMatrices.mvMatrix[14] = 0.0;
-			skybox.draw(rootMatrices, null, null);
+			skybox.draw(rootMatrices, null, RenderPass.FINAL);
 		}
 
 		//graph nodes
 		gl.cullFace(gl.BACK);
 		gl.enable(gl.DEPTH_TEST);
-		//set projection matrix back to camera from light
-		rootMatrices.pMatrix = activeCamera.getProjectionMatrix();
-		rootMatrices.camMatrix = activeCamera.getTransform();
-
 		for(var j = 0; j < rootChildren.length; j++)
 		{
 			mat4.identity(rootMatrices.mvMatrix);
@@ -138,6 +163,9 @@ function Scene()
 		while(lights.length)
 			lights.pop();
 		UID = 0;
+
+		if(shadowMapTarget)
+			shadowMapTarget.delete();
 	}
 
 
@@ -212,7 +240,7 @@ function Scene()
 			rotation[0] = toRad(x);
 			rotation[1] = toRad(y);
 			rotation[2] = toRad(z);
-			updateMatrix = true;
+			updateMatrix();
 		}
 
 		this.rotate = function(x, y, z)
@@ -220,7 +248,7 @@ function Scene()
 			rotation[0] += toRad(x);
 			rotation[1] += toRad(y);
 			rotation[2] += toRad(z);
-			updateMatrix = true;
+			updateMatrix();
 		}
 
 		this.setPosition = function(x, y, z)
@@ -228,7 +256,7 @@ function Scene()
 			position[0] = x;
 			position[1] = y;
 			position[2] = z;
-			updateMatrix = true;
+			updateMatrix();
 		}
 
 		this.getPosition = function()
@@ -248,7 +276,7 @@ function Scene()
 			position[0] += x;
 			position[1] += y;
 			position[2] += z;
-			updateMatrix = true;
+			updateMatrix();
 		}
 
 		this.setScale = function(x, y, z)
@@ -256,7 +284,7 @@ function Scene()
 			scale[0] = x;
 			scale[1] = y;
 			scale[2] = z;
-			updateMatrix = true;
+			updateMatrix();
 		}
 
 		this.scale = function(x, y, z)
@@ -264,7 +292,7 @@ function Scene()
 			scale[0] *= x;
 			scale[1] *= y;
 			scale[2] *= z;
-			updateMatrix = true;
+			updateMatrix();
 		}
 
 		this.setOrigin = function(x, y, z)
@@ -285,23 +313,22 @@ function Scene()
 			return worldMatrix;
 		}
 
-		var updateMatrix = true;
+		function updateMatrix()
+		{
+			mat4.identity(mvMatrix);
+
+			mat4.translate(mvMatrix, [position[0], position[1], position[2]]);							
+			mat4.rotate(mvMatrix, rotation[1], [0, 1, 0]);
+			mat4.rotate(mvMatrix, rotation[2], [0, 0, 1]);
+			mat4.rotate(mvMatrix, rotation[0], [1, 0, 0]);
+			//scale first if you want to scale about the origin point (this will also scale the distance to the origin of course)
+			mat4.scale(mvMatrix, [scale[0], scale[1], scale[2]]);
+			mat4.translate(mvMatrix, [-origin[0], -origin[1], -origin[2]]);				
+		}		
+		updateMatrix();
+
 		this.update = function(dt, sceneNode)
 		{
-			if(updateMatrix)
-			{
-				mat4.identity(mvMatrix);
-
-				mat4.translate(mvMatrix, [position[0], position[1], position[2]]);							
-				mat4.rotate(mvMatrix, rotation[1], [0, 1, 0]);
-				mat4.rotate(mvMatrix, rotation[2], [0, 0, 1]);
-				mat4.rotate(mvMatrix, rotation[0], [1, 0, 0]);
-				//scale first if you want to scale about the origin point (this will also scale the distance to the origin of course)
-				mat4.scale(mvMatrix, [scale[0], scale[1], scale[2]]);
-				mat4.translate(mvMatrix, [-origin[0], -origin[1], -origin[2]]);				
-				updateMatrix = false;
-			}			
-
 			this.updateSelf(dt, sceneNode);
 			for(var k = 0; k < children.length; k++)
 				children[k].update(dt, children[k]);

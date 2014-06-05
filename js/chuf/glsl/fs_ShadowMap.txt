@@ -4,12 +4,12 @@
 
 //GLES 1.0 / WebGL
 
-#version 100
+//#version 100
 
 highp vec4 pack(const in highp float depth)
 {
-	const highp vec4 bitshift(16777216.0, 65536.0, 256.0, 1.0);
-	const highp vec4 bitmask(0.0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0);
+	const highp vec4 bitshift = vec4(16777216.0, 65536.0, 256.0, 1.0);
+	const highp vec4 bitmask = vec4(0.0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0);
 	highp vec4 result = fract(depth * bitshift);
 	result -= result.xxyz * bitmask;
 	return result;

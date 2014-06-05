@@ -362,6 +362,12 @@ function MeshResource()
 			debugShader = shaderProg;
 		}
 
+		var shadowMapShader = null;
+		this.setShadowMapShader = function(shaderProg)
+		{
+			shadowMapShader = shaderProg;
+		}
+
 		var colourTexture   = null;
 		var normalTexture   = null;
 		var specularTexture = null;
@@ -397,9 +403,21 @@ function MeshResource()
 			switch(renderPass)
 			{
 			case RenderPass.SHADOW:
-				
+				if(shadowMapShader)
+				{
+					gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+					gl.vertexAttribPointer(shadowMapShader.getAttribute(ShaderAttribute.POSITION), 3, gl.FLOAT, false, 20, 0);
+					shadowMapShader.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
+					shadowMapShader.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
+					shaderProgram.setUniformMat4(ShaderUniform.CMAT, matrices.camMatrix);
+					shadowMapShader.bind();			
+
+					gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+					gl.drawElements(gl.TRIANGLES, indexBuffer.itemCount, gl.UNSIGNED_SHORT, 0);
+				}
 			break;
 			case RenderPass.FINAL:
+
 				//bind shader attrib buffers
 				gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
 				gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.POSITION), 3, gl.FLOAT, false, 20, 0);

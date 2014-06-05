@@ -44,7 +44,7 @@ function chufApp()
 
 			gl.viewportWidth = canvas.width;
 			gl.viewportHeight = canvas.height;
-			gl.clearColor(0.0, 0.03, 0.07, 1.0);
+			gl.clearColor(1.0, 0.03, 0.07, 1.0);
 
 			//gl.enable(gl.BLEND);
 			//gl.blend_func(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);

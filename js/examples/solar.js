@@ -6,7 +6,7 @@
 function createExampleState(gl, shaderResource, meshResource, textureResource)
 {
 	var state = new State();
-	var scene = new Scene();
+	var scene = new Scene(gl);
 
 	state.load = function()
 	{
@@ -14,6 +14,7 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		var globeMesh = meshResource.getSphere(gl, 1.0);
 		globeMesh.setShader(shaderResource.getShaderProgram(gl, ShaderName.NORMALMAP));
 		globeMesh.setDebugShader(shaderResource.getShaderProgram(gl, ShaderName.DEBUG));
+		globeMesh.setShadowMapShader(shaderResource.getShaderProgram(gl, ShaderName.SHADOWMAP));
 		
 		var globeNode = new scene.createNode();
 		globeNode.attachMesh(globeMesh);
@@ -66,7 +67,7 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 			];
 		var cubeMap = textureResource.getCubeMap(gl, images);
 		var skybox = meshResource.getCube(gl, 1.0);
-		skybox.setTexture(TextureType.SKYBOX, cubeMap);
+		//skybox.setTexture(TextureType.SKYBOX, cubeMap);
 		skybox.setShader(shaderResource.getShaderProgram(gl, ShaderName.SKYBOX));
 		scene.setSkybox(skybox);
 
@@ -77,18 +78,24 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 
 		var camNode = scene.createNode();
 		camNode.attachCamera(camera);
+		//camNode.move(1.0, 0.3, 0.0);
 		camNode.updateSelf = function(dt, sceneNode)
 		{
-			//sceneNode.rotate(10.0 *dt, 0.0, 0.0);
+			//sceneNode.rotate(0.0, 5.0 *dt, 0.0);
 			//sceneNode.move(0.0, 1.0 * dt, 0.0);
+			//sceneNode.setScale(-1.0, -1.0, 1.0);
 		}
 		scene.addChild(camNode);
 
 		var light = scene.addLight();
 		var lightNode = scene.createNode();
-		lightNode.setPosition(13.0, 0.5, 8.0);
+		lightNode.setPosition(10.0, 0.5, 1.0);
 		lightNode.attachLight(light);
 		scene.addChild(lightNode);
+
+		var shadowMapTexture = new RenderTexture(gl, 1024, 1024, true, TargetType.CUBEMAP);
+		scene.setShadowMap(shadowMapTexture);
+		skybox.setTexture(TextureType.SKYBOX, shadowMapTexture);
 	}
 	
 	state.handleEvent = function()
@@ -103,10 +110,6 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 
 	state.draw = function()
 	{
-		gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-		//TODO fetch viewport for active scene camera
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
 		scene.draw(gl);
 	}
 

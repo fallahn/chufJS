@@ -99,7 +99,7 @@ function ShaderResource()
 		break;
 		case ShaderName.SHADOWMAP:
 			fragShader = getShader(gl, readFile("/js/chuf/glsl/fs_ShadowMap.txt"), ShaderType.FRAGMENT);
-			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_ShadowMap.txt"), ShderType.VERTEX);
+			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_ShadowMap.txt"), ShaderType.VERTEX);
 		break;
 		default:
 		//TODO allow for custom shaders
