@@ -38,56 +38,46 @@ function Light()
 		}
 		return inverseMVMatrix;		
 	}
-	var faceDirections = 
-	[
-		vec3.create([1.0, 0.0, 0.0]),
-		vec3.create([-1.0, 0.0, 0.0]),
-		vec3.create([0.0, 1.0, 0.0]),
-		vec3.create([0.0, -1.0, 0.0]),
-		vec3.create([0.0, 0.0, 1.0]),
-		vec3.create([0.0, 0.0, -1.0])
-	];
+
 	this.getFaceTransform = function(face)
 	{
-		//mat4.lookAt(this.getPosition(), faceDirections[face], [0.0, 1.0, 0.0], inverseMVMatrix);
-		switch(face) //TODO this won't work unless node transforms are updated immediately
+		mat4.identity(inverseMVMatrix);
+		mat4.translate(inverseMVMatrix, this.getPosition());
+
+		switch(face)
 		{
 		case 0:
-			parent.setRotation(0.0, 0.0, 0.0);
+			mat4.rotate(inverseMVMatrix, 1.571, [0, 1, 0]);
 			break;
 		case 1:
-			parent.setRotation(0.0, 90.0, 0.0);
+			mat4.rotate(inverseMVMatrix, -1.571, [0, 1, 0]);
 			break;
 		case 2:
-			parent.setRotation(0.0, 180.0, 0.0);
+			mat4.rotate(inverseMVMatrix, 1.571, [1, 0, 0]);
 			break;
 		case 3:
-			parent.setRotation(0.0, 270.0, 0.0);
+			mat4.rotate(inverseMVMatrix, -1.571, [1, 0, 0]);
 			break;
 		case 4:
-			parent.setRotation(90.0, 0.0, 0.0);
+			
 			break;
 		case 5:
-			parent.setRotation(-90.0, 0.0, 0.0);
+			mat4.rotate(inverseMVMatrix, 3.142, [0, 1, 0]);
 			break;			
 		}
-		mat4.inverse(parent.getWorldTransform(), inverseMVMatrix);
-		return mat4.inverse(inverseMVMatrix);
+
+		//mat4.scale(inverseMVMatrix, [1.0, 1.0, 1.0]);
+		mat4.inverse(inverseMVMatrix);	
+		return inverseMVMatrix;
 	}
 
 	var pMat = mat4.create();
 	mat4.perspective(90.0, 1.0, 0.1, 100.0, pMat);
+	mat4.scale(pMat, [-1.0, -1.0, 1.0]);
+	//mat4.rotate(pMat, 3.142, [1, 0, 0]);
 	this.getProjection = function()
 	{
 		//projection matrix for shadow map shader
 		return pMat;
-	}
-
-	this.setProjection = function(fov, width, height)
-	{
-		//TODO decide on how we want to set these planes - smaller difference gives 
-		//better accuracy, but bigger risk of missing objects in shadow map
-		//TODO decide if we prefer orthogonal?
-		mat4.perspective(fov, width / height, width, height, 0, 50, pMatrix);
 	}
 }

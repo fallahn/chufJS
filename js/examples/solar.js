@@ -81,7 +81,7 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		//camNode.move(1.0, 0.3, 0.0);
 		camNode.updateSelf = function(dt, sceneNode)
 		{
-			//sceneNode.rotate(0.0, 5.0 *dt, 0.0);
+			//sceneNode.rotate(0.0, 10.0 *dt, 0.0);
 			//sceneNode.move(0.0, 1.0 * dt, 0.0);
 			//sceneNode.setScale(-1.0, -1.0, 1.0);
 		}
@@ -89,7 +89,7 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 
 		var light = scene.addLight();
 		var lightNode = scene.createNode();
-		lightNode.setPosition(10.0, 0.5, 1.0);
+		//lightNode.setPosition(10.0, 0.5, 1.0);
 		lightNode.attachLight(light);
 		scene.addChild(lightNode);
 

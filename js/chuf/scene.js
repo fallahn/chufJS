@@ -6,6 +6,8 @@ var RenderPass = Object.freeze
 
 function Scene()
 {
+	
+
 	/*
 	Currently only the first light is used by forward shading
 	I plan to use multiple lights when deferred shading becomes available
@@ -99,8 +101,18 @@ function Scene()
 			return;
 		}
 		gl.enable(gl.DEPTH_TEST);
-		gl.enable(gl.CULL_FACE);
-		gl.cullFace(gl.FRONT);		
+		
+		gl.enable(gl.CULL_FACE);		
+		gl.cullFace(gl.FRONT);				
+
+		var colours = [
+				0.0, 1.0, 0.0, 1.0,
+				1.0, 0.0, 0.0, 1.0,
+				0.0, 0.0, 1.0, 1.0,
+				1.0, 1.0, 0.0, 1.0,
+				0.0, 1.0, 1.0, 1.0,
+				1.0, 0.0, 1.0, 1.0];
+		
 
 		//---------shadow pass-----------
 		if(shadowMapTarget)
@@ -110,15 +122,15 @@ function Scene()
 			for(var f = 0; f < 6; ++f)
 			{
 				shadowMapTarget.setActive(true, f);
+				gl.clearColor(colours[(f * 4) + 0], colours[(f * 4) + 1], colours[(f * 4) + 2], colours[(f * 4) + 3]);
 				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-				//rootMatrices.camMatrix = lights[0].getFaceTransform(f);
-				//mat4.scale(rootMatrices.camMatrix, [-1.0, -1.0, 1.0]);
+				rootMatrices.camMatrix = lights[0].getFaceTransform(f);
 				
 				for(var z = 0; z < rootChildren.length; ++z)
 				{
 					mat4.identity(rootMatrices.mvMatrix);
-					rootChildren[z].draw(gl, rootMatrices, lights, RenderPass.SHADOW);
+					rootChildren[z].draw(rootMatrices, RenderPass.FINAL);
 				}
 			}
 			shadowMapTarget.setActive(false);
@@ -136,24 +148,23 @@ function Scene()
 		//skybox
 		if(skybox)
 		{
-			
-			gl.disable(gl.DEPTH_TEST);
+			gl.depthMask(false);
 			mat4.set(rootMatrices.camMatrix, rootMatrices.mvMatrix);
 			//nerf translation
 			rootMatrices.mvMatrix[12] = 0.0;
 			rootMatrices.mvMatrix[13] = 0.0;
 			rootMatrices.mvMatrix[14] = 0.0;
-			skybox.draw(rootMatrices, null, RenderPass.FINAL);
+			skybox.draw(rootMatrices, RenderPass.FINAL);
+			gl.depthMask(true);
 		}
-
+/*
 		//graph nodes
 		gl.cullFace(gl.BACK);
-		gl.enable(gl.DEPTH_TEST);
 		for(var j = 0; j < rootChildren.length; j++)
 		{
 			mat4.identity(rootMatrices.mvMatrix);
-			rootChildren[j].draw(gl, rootMatrices, lights, RenderPass.FINAL);
-		}
+			rootChildren[j].draw(rootMatrices, RenderPass.FINAL);
+		}*/
 	}
 
 	this.clear = function()
@@ -240,7 +251,7 @@ function Scene()
 			rotation[0] = toRad(x);
 			rotation[1] = toRad(y);
 			rotation[2] = toRad(z);
-			updateMatrix();
+			updateMatrix = true;
 		}
 
 		this.rotate = function(x, y, z)
@@ -248,7 +259,7 @@ function Scene()
 			rotation[0] += toRad(x);
 			rotation[1] += toRad(y);
 			rotation[2] += toRad(z);
-			updateMatrix();
+			updateMatrix = true;
 		}
 
 		this.setPosition = function(x, y, z)
@@ -256,7 +267,7 @@ function Scene()
 			position[0] = x;
 			position[1] = y;
 			position[2] = z;
-			updateMatrix();
+			updateMatrix = true
 		}
 
 		this.getPosition = function()
@@ -276,7 +287,7 @@ function Scene()
 			position[0] += x;
 			position[1] += y;
 			position[2] += z;
-			updateMatrix();
+			updateMatrix = true;
 		}
 
 		this.setScale = function(x, y, z)
@@ -284,7 +295,7 @@ function Scene()
 			scale[0] = x;
 			scale[1] = y;
 			scale[2] = z;
-			updateMatrix();
+			updateMatrix = true;
 		}
 
 		this.scale = function(x, y, z)
@@ -292,7 +303,7 @@ function Scene()
 			scale[0] *= x;
 			scale[1] *= y;
 			scale[2] *= z;
-			updateMatrix();
+			updateMatrix = true;
 		}
 
 		this.setOrigin = function(x, y, z)
@@ -312,23 +323,25 @@ function Scene()
 		{
 			return worldMatrix;
 		}
-
-		function updateMatrix()
-		{
-			mat4.identity(mvMatrix);
-
-			mat4.translate(mvMatrix, [position[0], position[1], position[2]]);							
-			mat4.rotate(mvMatrix, rotation[1], [0, 1, 0]);
-			mat4.rotate(mvMatrix, rotation[2], [0, 0, 1]);
-			mat4.rotate(mvMatrix, rotation[0], [1, 0, 0]);
-			//scale first if you want to scale about the origin point (this will also scale the distance to the origin of course)
-			mat4.scale(mvMatrix, [scale[0], scale[1], scale[2]]);
-			mat4.translate(mvMatrix, [-origin[0], -origin[1], -origin[2]]);				
-		}		
-		updateMatrix();
+		
+		var updateMatrix = true;
 
 		this.update = function(dt, sceneNode)
 		{
+			if(updateMatrix)
+			{
+				mat4.identity(mvMatrix);
+
+				mat4.translate(mvMatrix, [position[0], position[1], position[2]]);							
+				mat4.rotate(mvMatrix, rotation[1], [0, 1, 0]);
+				mat4.rotate(mvMatrix, rotation[2], [0, 0, 1]);
+				mat4.rotate(mvMatrix, rotation[0], [1, 0, 0]);
+				//scale first if you want to scale about the origin point (this will also scale the distance to the origin of course)
+				mat4.scale(mvMatrix, [scale[0], scale[1], scale[2]]);
+				mat4.translate(mvMatrix, [-origin[0], -origin[1], -origin[2]]);
+				updateMatrix = false;				
+			}
+
 			this.updateSelf(dt, sceneNode);
 			for(var k = 0; k < children.length; k++)
 				children[k].update(dt, children[k]);
@@ -340,7 +353,7 @@ function Scene()
 			//see state creation in examples folder
 		}
 
-		this.draw = function(gl, matrices, lights, renderPass)
+		this.draw = function(matrices, renderPass)
 		{
 			mat4.multiply(matrices.mvMatrix, mvMatrix);
 			mat4.set(matrices.mvMatrix, worldMatrix);
@@ -360,11 +373,11 @@ function Scene()
 				{
 					mesh.setTexture(TextureType.SPECULAR, specularTexture);
 				}
-				mesh.draw(matrices, lights[0], renderPass);
+				mesh.draw(matrices, renderPass);
 			}
 
 			for(var l = 0; l < children.length; ++l)
-				children[l].draw(gl, matrices, lights, renderPass);
+				children[l].draw(matrices, renderPass);
 		}
 
 		var isDeleted = false;

@@ -113,7 +113,6 @@ function TextureResource()
 	function CubeMap(gl, imageArray) //must contain paths to 6 images, +x, -x, +y, -y, +z, -z
 	{
 		var glTexture = gl.createTexture();
-		//TODO create temp texture while loading?
 
 		gl.bindTexture(gl.TEXTURE_CUBE_MAP, glTexture);
 		gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
