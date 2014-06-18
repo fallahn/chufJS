@@ -18,7 +18,7 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		
 		var globeNode = new scene.createNode();
 		globeNode.attachMesh(globeMesh);
-		globeNode.setPosition(0.0, 0.0, -7.0);
+		globeNode.setPosition(0.0, 0.0, -4.0);
 		globeNode.updateSelf = function(dt, sceneNode)
 		{
 			sceneNode.rotate(0.0, 112 * dt, 0.0);
@@ -41,11 +41,7 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		moonNode.attachMesh(globeMesh);
 		moonNode.setScale(0.273, 0.273, 0.273);
 		moonNode.rotate(0.0, -90.0, 0.0);
-		moonNode.updateSelf = function(dt, sceneNode)
-		{
-			//TODO simulate moons orbital eccentricity?
-			//moonNode.rotate(0.0, -54.0 * dt, 0.0);	
-		}
+		
 
 		moonNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(gl, "img/moon_map/moon_colour.png"));
 		moonNode.setTexture(TextureType.NORMAL, textureResource.getTexture(gl, "img/moon_map/moon_normal.png"));
@@ -67,35 +63,61 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 			];
 		var cubeMap = textureResource.getCubeMap(gl, images);
 		var skybox = meshResource.getCube(gl, 1.0);
-		//skybox.setTexture(TextureType.SKYBOX, cubeMap);
+		skybox.setTexture(TextureType.SKYBOX, cubeMap);
 		skybox.setShader(shaderResource.getShaderProgram(gl, ShaderName.SKYBOX));
 		scene.setSkybox(skybox);
 
 		//create at least one camera for scene
 		var camera = new Camera(45.0, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0);
+		camera.setTarget(globeNode.getPosition());
 		scene.setActiveCamera(camera);
 		//moonNode.attachCamera(camera);
 
 		var camNode = scene.createNode();
 		camNode.attachCamera(camera);
-		//camNode.move(1.0, 0.3, 0.0);
+		//camNode.move(0.0, 19.3, -4.0);
+		//camNode.rotate(-90.0, 0.0, 0.0);
 		camNode.updateSelf = function(dt, sceneNode)
 		{
 			//sceneNode.rotate(0.0, 10.0 *dt, 0.0);
 			//sceneNode.move(0.0, 1.0 * dt, 0.0);
 			//sceneNode.setScale(-1.0, -1.0, 1.0);
+
 		}
 		scene.addChild(camNode);
 
+		moonNode.updateSelf = function(dt, sceneNode)
+		{
+			//TODO simulate moons orbital eccentricity?
+			//moonNode.rotate(0.0, -54.0 * dt, 0.0);	
+			//camera.setTarget(sceneNode.getWorldPosition());
+		}
+
 		var light = scene.addLight();
 		var lightNode = scene.createNode();
-		//lightNode.setPosition(10.0, 0.5, 1.0);
+		lightNode.setPosition(5.0, 0.0, -1.0);
 		lightNode.attachLight(light);
+		//lightNode.attachMesh(globeMesh);
+		//lightNode.setScale(0.1, 0.1, 0.1);
+		lightNode.updateSelf = function(dt, sceneNode)
+		{
+			//sceneNode.rotate(0.0, 10.0 *dt, 0.0);
+		}
 		scene.addChild(lightNode);
 
-		var shadowMapTexture = new RenderTexture(gl, 1024, 1024, true, TargetType.CUBEMAP);
+		var shadowMapTexture = new RenderTexture(gl, 1024, 1024, true, TargetType.TEXTURE_2D);
 		scene.setShadowMap(shadowMapTexture);
-		skybox.setTexture(TextureType.SKYBOX, shadowMapTexture);
+
+		var cubeMesh = meshResource.getPlane(gl, 1.0, 1.0);
+		cubeMesh.setShader(shaderResource.getShaderProgram(gl, ShaderName.FLAT));
+		var cubeNode = scene.createNode();
+		cubeNode.setPosition(-0.55, -0.55, -3.0);
+		cubeNode.attachMesh(cubeMesh);
+		cubeNode.setTexture(TextureType.DIFFUSE, shadowMapTexture);
+		//cubeNode.rotate(-90.0, 0.0, 0.0);
+		//cubeNode.move(0.0, 17.0, -0.2);
+		scene.addChild(cubeNode);
+
 	}
 	
 	state.handleEvent = function()

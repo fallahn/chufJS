@@ -25,6 +25,7 @@ varying vec2 vTexCoord;
 void main(void)
 {
 	vec4 viewVert = uCMat * uMVMat * vec4(aPosition, 1.0);
+	//vec4 lightPos = uCMat * vec4(uLightPosition, 1.0);
 	gl_Position = uPMat * viewVert;
 	vTexCoord = aTexCoord;
 

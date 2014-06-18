@@ -1,0 +1,21 @@
+//////////////////////////////////////
+// default flat shading vertex shader
+//////////////////////////////////////
+
+//GLES 1.0 / WebGL
+
+#version 100
+attribute vec3 aPosition;
+attribute vec2 aTexCoord;
+
+uniform mat4 uMVMat;
+uniform mat4 uCMat;
+uniform mat4 uPMat;
+
+varying vec2 vTexCoord;
+
+void main(void)
+{
+	gl_Position = uPMat *uCMat * uMVMat * vec4(aPosition, 1.0);
+	vTexCoord = aTexCoord;
+}

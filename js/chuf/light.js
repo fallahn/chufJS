@@ -72,12 +72,18 @@ function Light()
 	}
 
 	var pMat = mat4.create();
-	mat4.perspective(90.0, 1.0, 0.1, 100.0, pMat);
-	mat4.scale(pMat, [-1.0, -1.0, 1.0]);
+	mat4.perspective(45.0, 1.0, 0.1, 100.0, pMat);
+	//mat4.scale(pMat, [-1.0, -1.0, 1.0]);
 	//mat4.rotate(pMat, 3.142, [1, 0, 0]);
 	this.getProjection = function()
 	{
 		//projection matrix for shadow map shader
 		return pMat;
+	}
+
+	this.getModelView = function(target)
+	{
+		mat4.identity(inverseMVMatrix);
+		return mat4.lookAt(this.getPosition(), target, [0.0, 1.0, 0.0], inverseMVMatrix);
 	}
 }

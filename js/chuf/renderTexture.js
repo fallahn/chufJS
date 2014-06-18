@@ -20,33 +20,20 @@ function RenderTexture(gl, width, height, createDepthBuffer, targetType)
 
 	var fboTexture = gl.createTexture();
 
-	if(targetType == TargetType.TEXTURE_2D)
+	if(targetType === TargetType.TEXTURE_2D)
 	{
 		gl.bindTexture(gl.TEXTURE_2D, fboTexture);
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-		//generate mipmaps if possible
-		if(isPowTwo(width) && isPowTwo(height))
-		{
-			gl.generateMipmap(gl.TEXTURE_2D);		
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-		}
-		else
-		{
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);		
-		}
-	
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);		
+
 		gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fboTexture, 0);	
 		gl.bindTexture(gl.TEXTURE_2D, null);
 
-		function isPowTwo(num)
-		{
-			return (num & (num - 1)) === 0;
-		}
 	}
-	else if(targetType == TargetType.CUBEMAP)
+	else if(targetType === TargetType.CUBEMAP)
 	{
 		if(width !== height) console.log("WARNING: cubemap textures have non-square texture size.");
 

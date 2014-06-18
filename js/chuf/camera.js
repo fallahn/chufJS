@@ -35,4 +35,14 @@ function Camera(fov, aspectRatio, nearPlane, farPlane)
 	{
 		parent = sceneNode;
 	}
+
+	var lookAtTarget = vec3.create();
+	this.setTarget = function(target)
+	{
+		lookAtTarget = target;
+	}
+	this.getTarget = function()
+	{
+		return lookAtTarget;
+	}
 }

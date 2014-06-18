@@ -8,7 +8,8 @@ var ShaderName = Object.freeze
 	NORMALMAP : 1,
 	DEBUG     : 2,
 	SKYBOX    : 3,
-	SHADOWMAP : 4
+	SHADOWMAP : 4,
+	FLAT	  : 5
 });
 
 var ShaderType = Object.freeze
@@ -100,6 +101,10 @@ function ShaderResource()
 		case ShaderName.SHADOWMAP:
 			fragShader = getShader(gl, readFile("/js/chuf/glsl/fs_ShadowMap.txt"), ShaderType.FRAGMENT);
 			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_ShadowMap.txt"), ShaderType.VERTEX);
+		break;
+		case ShaderName.FLAT:
+			fragShader = getShader(gl, readFile("/js/chuf/glsl/fs_Flat.txt"), ShaderType.FRAGMENT);
+			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_Flat.txt"), ShaderType.VERTEX);
 		break;
 		default:
 		//TODO allow for custom shaders

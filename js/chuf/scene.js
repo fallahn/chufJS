@@ -103,8 +103,8 @@ function Scene()
 		gl.enable(gl.DEPTH_TEST);
 		
 		gl.enable(gl.CULL_FACE);		
-		gl.cullFace(gl.FRONT);				
-
+		gl.cullFace(gl.BACK);				
+		/*
 		var colours = [
 				0.0, 1.0, 0.0, 1.0,
 				1.0, 0.0, 0.0, 1.0,
@@ -112,27 +112,25 @@ function Scene()
 				1.0, 1.0, 0.0, 1.0,
 				0.0, 1.0, 1.0, 1.0,
 				1.0, 0.0, 1.0, 1.0];
-		
+		*/
 
 		//---------shadow pass-----------
 		if(shadowMapTarget)
 		{
 			gl.viewport(0, 0, shadowMapTarget.width, shadowMapTarget.height);
-			rootMatrices.pMatrix = lights[0].getProjection();			
-			for(var f = 0; f < 6; ++f)
-			{
-				shadowMapTarget.setActive(true, f);
-				gl.clearColor(colours[(f * 4) + 0], colours[(f * 4) + 1], colours[(f * 4) + 2], colours[(f * 4) + 3]);
-				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+			rootMatrices.pMatrix = lights[0].getProjection();
+			shadowMapTarget.setActive(true);
 
-				rootMatrices.camMatrix = lights[0].getFaceTransform(f);
-				
-				for(var z = 0; z < rootChildren.length; ++z)
-				{
-					mat4.identity(rootMatrices.mvMatrix);
-					rootChildren[z].draw(rootMatrices, RenderPass.FINAL);
-				}
+			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+			//this just points the light at whatever the camera is looking at
+			rootMatrices.camMatrix = lights[0].getModelView(activeCamera.getTarget());
+			
+			for(var z = 0; z < rootChildren.length; ++z)
+			{
+				mat4.identity(rootMatrices.mvMatrix);
+				rootChildren[z].draw(rootMatrices, RenderPass.SHADOW);
 			}
+
 			shadowMapTarget.setActive(false);
 		}
 
@@ -148,6 +146,7 @@ function Scene()
 		//skybox
 		if(skybox)
 		{
+			gl.cullFace(gl.FRONT); //only need this if we aren't culling for shadow map
 			gl.depthMask(false);
 			mat4.set(rootMatrices.camMatrix, rootMatrices.mvMatrix);
 			//nerf translation
@@ -157,14 +156,14 @@ function Scene()
 			skybox.draw(rootMatrices, RenderPass.FINAL);
 			gl.depthMask(true);
 		}
-/*
+
 		//graph nodes
 		gl.cullFace(gl.BACK);
 		for(var j = 0; j < rootChildren.length; j++)
 		{
 			mat4.identity(rootMatrices.mvMatrix);
 			rootChildren[j].draw(rootMatrices, RenderPass.FINAL);
-		}*/
+		}
 	}
 
 	this.clear = function()

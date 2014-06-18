@@ -57,6 +57,17 @@ function MeshResource()
 		return mesh;
 	}
 
+	this.getPlane = function(gl, width, height)
+	{
+		var name = "plane" + width.toString() + height.toString();
+		var mesh = existingMesh(name);
+		if(mesh) return mesh;
+
+		mesh = new Mesh(gl, plane(width, height));
+		meshes.push([name, mesh]);
+		return mesh;
+	}
+
 	function existingMesh(name)
 	{
 		for(var i = 0; i < meshes.length; ++i)
@@ -350,10 +361,37 @@ function MeshResource()
 
 
 //------------------------------------------------------------------------------------
+
+		var castShadows = true;
+		this.setShadowCasting = function(bool)
+		{
+			castShadows = bool;
+		}
+		this.castShadows = function()
+		{
+			return castShadows;
+		}
+
+		var rxShadows = true;
+		this.setReceiveShadows = function(bool)
+		{
+			rxShadows = bool;
+		}
+		this.receivesShadows = function()
+		{
+			return rxShadows;
+		}		
+
 		var shaderProgram  = null;
 		this.setShader = function(shaderProg)
 		{
 			shaderProgram = shaderProg;
+			if(shaderProgram.shaderName === ShaderName.SKYBOX ||
+				shaderProgram.shaderName === ShaderName.FLAT)
+			{
+				rxShadows = false;
+				castShadows = false;
+			}
 		}
 
 		var debugShader = null;
@@ -403,6 +441,7 @@ function MeshResource()
 			switch(renderPass)
 			{
 			case RenderPass.SHADOW:
+				if(!castShadows) break;
 				if(shadowMapShader)
 				{
 					gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
@@ -423,7 +462,7 @@ function MeshResource()
 				gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.POSITION), 3, gl.FLOAT, false, 20, 0);
 				gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TEXCOORD), 2, gl.FLOAT, false, 20, 12);
 
-				if(shaderProgram.shaderName != ShaderName.SKYBOX && normalBuffer)
+				if(rxShadows && normalBuffer)
 				{
 					gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
 					gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.NORMAL), normalBuffer.itemSize, gl.FLOAT, false, 36, 0);
@@ -711,6 +750,34 @@ function MeshResource()
 			20, 21, 22,  20, 22, 23
 		];
 
+		return vertexData;
+	}
+
+	function plane(width, height)
+	{
+		var vertexData = new VertexData();
+
+		width /= 2.0; //origin about centre
+		height /= 2.0;
+		vertexData.positions =
+		[
+			-width, -height,  0.0,
+			 width, -height,  0.0,
+			 width,  height,  0.0,
+			-width,  height,  0.0
+		];
+		vertexData.uvs = 
+		[
+			//f0
+			0.0, 0.0,
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0
+		];
+		vertexData.indices =
+		[
+			 0,  1,  2,   0,  2,  3
+		];		
 		return vertexData;
 	}
 }

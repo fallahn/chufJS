@@ -1,0 +1,16 @@
+//////////////////////////////////////////////////
+// default phong shading with optional diffuse map
+//////////////////////////////////////////////////
+
+//GLES 1.0 / WebGL
+
+#version 100
+precision mediump float;
+varying vec2 vTexCoord;
+
+uniform sampler2D uColourMap;
+
+void main(void)
+{
+	gl_FragColor = texture2D(uColourMap, vTexCoord.xy);
+}
