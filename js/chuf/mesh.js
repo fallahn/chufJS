@@ -386,11 +386,17 @@ function MeshResource()
 		this.setShader = function(shaderProg)
 		{
 			shaderProgram = shaderProg;
-			if(shaderProgram.shaderName === ShaderName.SKYBOX ||
-				shaderProgram.shaderName === ShaderName.FLAT)
+			switch(shaderProgram.shaderName)
 			{
+			case ShaderName.SKYBOX:
+			case ShaderName.FLAT:
 				rxShadows = false;
 				castShadows = false;
+			break;
+			default:
+				rxShadows = true;
+				castShadows = true;
+			break;
 			}
 		}
 
@@ -478,6 +484,8 @@ function MeshResource()
 						gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TANGENT), normalBuffer.itemSize, gl.FLOAT, false, 36, 12);
 						gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.BITANGENT), normalBuffer.itemSize, gl.FLOAT, false, 36, 24);
 					}
+
+					//TODO set shadowmap, light projection and light mv uniform
 				}			
 
 				//set shader uniforms

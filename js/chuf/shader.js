@@ -35,16 +35,18 @@ var ShaderUniform = Object.freeze
 	MVMAT       : 1,
 	CMAT        : 2,
 	NMAT        : 3,
+	BIASMAT     : 4,
+	LIGHTMVMAT  : 5,
 	//maps
-	COLOURMAP   : 4,
-	NORMALMAP   : 5,
-	SPECULARMAP : 6,
-	SKYBOXMAP   : 7,
+	COLOURMAP   : 6,
+	NORMALMAP   : 7,
+	SPECULARMAP : 8,
+	SKYBOXMAP   : 9,
 	//lighting
-	LIGHT_POS	: 8,
-	LIGHT_SPEC  : 9,
-	LIGHT_DIFF  : 10,
-	LIGHT_AMB   : 11
+	LIGHT_POS	: 10,
+	LIGHT_SPEC  : 11,
+	LIGHT_DIFF  : 12,
+	LIGHT_AMB   : 13
 });
 
 function ShaderResource()
@@ -63,6 +65,12 @@ function ShaderResource()
 		
 		while(shaders.length) shaders.pop();
 	}
+
+	//set this on shadow receiving shaders, phong/bump mapping etc
+	var shadowBiasMatrix = mat4.create();
+	mat4.identity(shadowBiasMatrix);
+	mat4.scale(shadowBiasMatrix, [0.5, 0.5, 0.5], shadowBiasMatrix);
+	mat4.translate(shadowBiasMatrix, [1.0, 1.0, 1.0, 1.0], shadowBiasMatrix);
 
 	this.getShaderProgram = function(gl, shaderName)
 	{
@@ -122,6 +130,8 @@ function ShaderResource()
 			alert("Failed to Link Shader Program");
 			return null;
 		}
+
+		//TODO set bias matrix uniform on shaders which receive shadows
 
 		shaders.push(newShader);
 		return newShader;
@@ -240,18 +250,20 @@ function ShaderResource()
 			return program;
 		}
 
-		var pMatUniformLocation  = null;
-		var mvMatUniformLocation = null;
-		var cMatUniformLocation  = null;
-		var nMatUniformLocation  = null;
+		var pMatUniformLocation        = null;
+		var mvMatUniformLocation       = null;
+		var cMatUniformLocation        = null;
+		var nMatUniformLocation        = null;
+		var biasMatUniformLocation     = null;
+		var lightMVMatUniformLocation  = null;
 		var colourmapUniformLocation   = null;
 		var normalmapUniformLocation   = null;
 		var specularmapUniformLocation = null;
 		var skyboxmapUniformLocation   = null;
-		var lightPosUniformLocation  = null;
-		var lightSpecUniformLocation = null;
-		var lightDiffUniformLocation = null;
-		var lightAmbUniformLocation  = null;
+		var lightPosUniformLocation    = null;
+		var lightSpecUniformLocation   = null;
+		var lightDiffUniformLocation   = null;
+		var lightAmbUniformLocation    = null;
 
 		var uniforms = [];
 		function getUniformLocation(name)
@@ -276,6 +288,14 @@ function ShaderResource()
 				if(nMatUniformLocation == null)
 					nMatUniformLocation = gl.getUniformLocation(program, "uNMat");
 			return nMatUniformLocation;
+			case ShaderUniform.BIASMAT:
+				if(biasMatUniformLocation == null)
+					biasMatUniformLocation = gl.getUniformLocation(program, "uBiasMat");
+			return biasMatUniformLocation;
+			case ShaderUniform.LIGHTMVMAT:
+				if(lightMVMatUniformLocation == null)
+					lightMVMatUniformLocation = gl.getUniformLocation(program, "uLightMVMat");
+			return lightMVMatUniformLocation;
 			case ShaderUniform.COLOURMAP:
 				if(colourmapUniformLocation == null)
 					colourmapUniformLocation = gl.getUniformLocation(program, "uColourMap");

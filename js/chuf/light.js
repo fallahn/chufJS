@@ -39,6 +39,7 @@ function Light()
 		return inverseMVMatrix;		
 	}
 
+	//experimental for shadow cube mapping
 	this.getFaceTransform = function(face)
 	{
 		mat4.identity(inverseMVMatrix);
@@ -65,25 +66,43 @@ function Light()
 			mat4.rotate(inverseMVMatrix, 3.142, [0, 1, 0]);
 			break;			
 		}
-
-		//mat4.scale(inverseMVMatrix, [1.0, 1.0, 1.0]);
 		mat4.inverse(inverseMVMatrix);	
 		return inverseMVMatrix;
 	}
 
 	var pMat = mat4.create();
 	mat4.perspective(45.0, 1.0, 0.1, 100.0, pMat);
-	//mat4.scale(pMat, [-1.0, -1.0, 1.0]);
-	//mat4.rotate(pMat, 3.142, [1, 0, 0]);
 	this.getProjection = function()
 	{
 		//projection matrix for shadow map shader
 		return pMat;
 	}
 
-	this.getModelView = function(target)
+	var target = vec3.create();
+	this.setTarget = function(targetPoint)
+	{
+		target = targetPoint;
+	}
+
+	this.getModelView = function()
 	{
 		mat4.identity(inverseMVMatrix);
 		return mat4.lookAt(this.getPosition(), target, [0.0, 1.0, 0.0], inverseMVMatrix);
+	}
+
+	var shadowMapTexture = null;
+	this.createShadowMapTexture = function(gl, width, height)
+	{
+		shadowMapTexture = new RenderTexture(gl, width, height, true, TargetType.TEXTURE_2D);
+	}
+	this.getShadowMapTexture = function()
+	{
+		return shadowMapTexture;
+	}
+
+	this.delete = function()
+	{
+		if(shadowMapTexture)
+			shadowMapTexture.delete();
 	}
 }

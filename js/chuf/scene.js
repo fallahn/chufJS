@@ -87,12 +87,6 @@ function Scene()
 
 
 	var shadowMapTarget = null;
-	this.setShadowMap = function(shadowMap)
-	{
-		shadowMapTarget = shadowMap;
-	}
-
-
 	this.draw = function(gl)
 	{
 		if(!activeCamera)
@@ -115,15 +109,17 @@ function Scene()
 		*/
 
 		//---------shadow pass-----------
+		shadowMapTarget = lights[0].getShadowMapTexture();
 		if(shadowMapTarget)
 		{
 			gl.viewport(0, 0, shadowMapTarget.width, shadowMapTarget.height);
 			rootMatrices.pMatrix = lights[0].getProjection();
 			shadowMapTarget.setActive(true);
-
+			gl.clearColor(1.0, 1.0, 1.0, 1.0);
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 			//this just points the light at whatever the camera is looking at
-			rootMatrices.camMatrix = lights[0].getModelView(activeCamera.getTarget());
+			lights[0].setTarget(activeCamera.getTarget());
+			rootMatrices.camMatrix = lights[0].getModelView();
 			
 			for(var z = 0; z < rootChildren.length; ++z)
 			{
@@ -169,13 +165,18 @@ function Scene()
 	this.clear = function()
 	{
 		while(rootChildren.length)
+		{
 			rootChildren.pop();
+		}
 		while(lights.length)
+		{
+			lights[lights.length - 1].delete();
 			lights.pop();
+		}
 		UID = 0;
 
-		if(shadowMapTarget)
-			shadowMapTarget.delete();
+		//if(shadowMapTarget)
+		//	shadowMapTarget.delete(); //performed by light deletion
 	}
 
 

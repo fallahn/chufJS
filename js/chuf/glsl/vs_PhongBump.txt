@@ -16,16 +16,19 @@ uniform mat4 uMVMat;
 uniform mat4 uPMat;
 uniform mat4 uCMat; //camera transform
 uniform mat3 uNMat;
+uniform mat4 uBiasMat;
+uniform mat4 uLightMVMat;
 uniform vec3 uLightPosition;
 
 varying vec3 vLightVec;
 varying vec3 vEyeVec;
 varying vec2 vTexCoord;
+varying vec4 vShadowPosition;
 
 void main(void)
 {
 	vec4 viewVert = uCMat * uMVMat * vec4(aPosition, 1.0);
-	//vec4 lightPos = uCMat * vec4(uLightPosition, 1.0);
+	//vec4 lightPos = uCMat * uLightMat * vec4(uLightPosition, 1.0);
 	gl_Position = uPMat * viewVert;
 	vTexCoord = aTexCoord;
 
@@ -42,4 +45,7 @@ void main(void)
 	vEyeVec.x = dot(temp, t);
 	vEyeVec.y = dot(temp, b);
 	vEyeVec.z = dot(temp, n);
+
+	//TODO would dividing the shadowCoord be better here done once per vert
+	//rather than once per frag?
 }

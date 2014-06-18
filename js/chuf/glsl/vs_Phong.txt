@@ -13,10 +13,13 @@ uniform mat4 uMVMat;
 uniform mat4 uCMat;
 uniform mat4 uPMat;
 uniform mat3 uNMat;
+uniform mat4 uBiasMat;
+uniform mat4 uLightMVMat;
 
 varying vec2 vTexCoord;
 varying vec3 vNormal;
 varying vec4 vPosition;
+varying vec4 vShadowPosition;
 
 void main(void)
 {
@@ -24,4 +27,6 @@ void main(void)
 	gl_Position = uPMat * vPosition;
 	vTexCoord = aTexCoord;
 	vNormal = uNMat * aNormal;
+
+	//TODO will performing shadowmap z divide per vertex provide better performance?
 }

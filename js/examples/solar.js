@@ -94,6 +94,7 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		}
 
 		var light = scene.addLight();
+		light.createShadowMapTexture(gl, 512, 512);		
 		var lightNode = scene.createNode();
 		lightNode.setPosition(5.0, 0.0, -1.0);
 		lightNode.attachLight(light);
@@ -105,15 +106,12 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		}
 		scene.addChild(lightNode);
 
-		var shadowMapTexture = new RenderTexture(gl, 1024, 1024, true, TargetType.TEXTURE_2D);
-		scene.setShadowMap(shadowMapTexture);
-
 		var cubeMesh = meshResource.getPlane(gl, 1.0, 1.0);
 		cubeMesh.setShader(shaderResource.getShaderProgram(gl, ShaderName.FLAT));
 		var cubeNode = scene.createNode();
 		cubeNode.setPosition(-0.55, -0.55, -3.0);
 		cubeNode.attachMesh(cubeMesh);
-		cubeNode.setTexture(TextureType.DIFFUSE, shadowMapTexture);
+		cubeNode.setTexture(TextureType.DIFFUSE, light.getShadowMapTexture());
 		//cubeNode.rotate(-90.0, 0.0, 0.0);
 		//cubeNode.move(0.0, 17.0, -0.2);
 		scene.addChild(cubeNode);
