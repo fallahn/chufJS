@@ -9,10 +9,10 @@
 attribute vec3 aPosition;
 
 uniform mat4 uPMat;
-uniform mat4 uMVMat;
-uniform mat4 uCMat;
+uniform mat4 uMMat;
+uniform mat4 uVMat;
 
 void main()
 {
-	gl_Position = uPMat * uCMat *uMVMat * vec4(aPosition, 1.0);
+	gl_Position = uPMat * uVMat * uMMat * vec4(aPosition, 1.0);
 }

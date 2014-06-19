@@ -10,18 +10,17 @@ function Scene()
 
 	/*
 	Currently only the first light is used by forward shading
-	I plan to use multiple lights when deferred shading becomes available
-	in webgl 2.0
+	TODO replace with stencil shadows, and add directional lighting
 	*/
 
 	var lights = [];
 	var maxLights = 8;
-	this.addLight = function()
+	this.addLight = function(gl, castShadows)
 	{
 		if(lights.length < maxLights)
 		{
-			//TODO pass render texture size to light for shadow map
 			var light = new Light();
+			if(castShadows) light.createShadowMapTexture(gl, 1024, 1024);	
 			lights.push(light);
 			return light;
 		}
@@ -42,9 +41,9 @@ function Scene()
 	//root node of the scene, main draw calls passed down to children
 	var rootMatrices =
 	{
-		pMatrix   : mat4.create(),
-		mvMatrix  : mat4.create(),
-		camMatrix : mat4.create()
+		pMatrix : mat4.create(),
+		mMatrix : mat4.create(),
+		vMatrix : mat4.create()
 	}
 	
 	var rootChildren = [];
@@ -97,7 +96,7 @@ function Scene()
 		gl.enable(gl.DEPTH_TEST);
 		
 		gl.enable(gl.CULL_FACE);		
-		gl.cullFace(gl.BACK);				
+		gl.cullFace(gl.FRONT);				
 		/*
 		var colours = [
 				0.0, 1.0, 0.0, 1.0,
@@ -113,17 +112,17 @@ function Scene()
 		if(shadowMapTarget)
 		{
 			gl.viewport(0, 0, shadowMapTarget.width, shadowMapTarget.height);
-			rootMatrices.pMatrix = lights[0].getProjection();
+			rootMatrices.pMatrix = lights[0].getProjectionMatrix();
 			shadowMapTarget.setActive(true);
 			gl.clearColor(1.0, 1.0, 1.0, 1.0);
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 			//this just points the light at whatever the camera is looking at
 			lights[0].setTarget(activeCamera.getTarget());
-			rootMatrices.camMatrix = lights[0].getModelView();
+			rootMatrices.vMatrix = lights[0].getViewMatrix();
 			
 			for(var z = 0; z < rootChildren.length; ++z)
 			{
-				mat4.identity(rootMatrices.mvMatrix);
+				mat4.identity(rootMatrices.mMatrix);
 				rootChildren[z].draw(rootMatrices, RenderPass.SHADOW);
 			}
 
@@ -137,18 +136,18 @@ function Scene()
 
 		//set projection matrix back to camera from light
 		rootMatrices.pMatrix = activeCamera.getProjectionMatrix();
-		rootMatrices.camMatrix = activeCamera.getTransform();
+		rootMatrices.vMatrix = activeCamera.getViewMatrix();
 
 		//skybox
 		if(skybox)
 		{
-			gl.cullFace(gl.FRONT); //only need this if we aren't culling for shadow map
+			//gl.cullFace(gl.FRONT); //only need this if we aren't culling for shadow map
 			gl.depthMask(false);
-			mat4.set(rootMatrices.camMatrix, rootMatrices.mvMatrix);
+			mat4.set(rootMatrices.vMatrix, rootMatrices.mMatrix);
 			//nerf translation
-			rootMatrices.mvMatrix[12] = 0.0;
-			rootMatrices.mvMatrix[13] = 0.0;
-			rootMatrices.mvMatrix[14] = 0.0;
+			rootMatrices.mMatrix[12] = 0.0;
+			rootMatrices.mMatrix[13] = 0.0;
+			rootMatrices.mMatrix[14] = 0.0;
 			skybox.draw(rootMatrices, RenderPass.FINAL);
 			gl.depthMask(true);
 		}
@@ -157,7 +156,7 @@ function Scene()
 		gl.cullFace(gl.BACK);
 		for(var j = 0; j < rootChildren.length; j++)
 		{
-			mat4.identity(rootMatrices.mvMatrix);
+			mat4.identity(rootMatrices.mMatrix);
 			rootChildren[j].draw(rootMatrices, RenderPass.FINAL);
 		}
 	}
@@ -313,10 +312,10 @@ function Scene()
 			origin[2] = z;
 		}
 
-		var mvMatrix = mat4.create();
+		var mMatrix = mat4.create();
 		this.getTransform = function()
 		{
-			return mvMatrix;
+			return mMatrix;
 		}
 		var worldMatrix = mat4.create();
 		this.getWorldTransform = function()
@@ -330,15 +329,15 @@ function Scene()
 		{
 			if(updateMatrix)
 			{
-				mat4.identity(mvMatrix);
+				mat4.identity(mMatrix);
 
-				mat4.translate(mvMatrix, [position[0], position[1], position[2]]);							
-				mat4.rotate(mvMatrix, rotation[1], [0, 1, 0]);
-				mat4.rotate(mvMatrix, rotation[2], [0, 0, 1]);
-				mat4.rotate(mvMatrix, rotation[0], [1, 0, 0]);
+				mat4.translate(mMatrix, [position[0], position[1], position[2]]);							
+				mat4.rotate(mMatrix, rotation[1], [0, 1, 0]);
+				mat4.rotate(mMatrix, rotation[2], [0, 0, 1]);
+				mat4.rotate(mMatrix, rotation[0], [1, 0, 0]);
 				//scale first if you want to scale about the origin point (this will also scale the distance to the origin of course)
-				mat4.scale(mvMatrix, [scale[0], scale[1], scale[2]]);
-				mat4.translate(mvMatrix, [-origin[0], -origin[1], -origin[2]]);
+				mat4.scale(mMatrix, [scale[0], scale[1], scale[2]]);
+				mat4.translate(mMatrix, [-origin[0], -origin[1], -origin[2]]);
 				updateMatrix = false;				
 			}
 
@@ -355,8 +354,8 @@ function Scene()
 
 		this.draw = function(matrices, renderPass)
 		{
-			mat4.multiply(matrices.mvMatrix, mvMatrix);
-			mat4.set(matrices.mvMatrix, worldMatrix);
+			mat4.multiply(matrices.mMatrix, mMatrix);
+			mat4.set(matrices.mMatrix, worldMatrix);
 			
 			if(mesh)
 			{

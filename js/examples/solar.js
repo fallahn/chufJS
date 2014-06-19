@@ -18,7 +18,7 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		
 		var globeNode = new scene.createNode();
 		globeNode.attachMesh(globeMesh);
-		globeNode.setPosition(0.0, 0.0, -4.0);
+		globeNode.setPosition(0.0, 0.0, -6.0);
 		globeNode.updateSelf = function(dt, sceneNode)
 		{
 			sceneNode.rotate(0.0, 112 * dt, 0.0);
@@ -30,11 +30,11 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		
 		//use this to orbit globe, and attach moon node to it
 		var moonOrbitNode = scene.createNode();
-		moonOrbitNode.setOrigin(0.0, 0.0, -5.0); //to scale moon should be 30x earth diamter
+		moonOrbitNode.setOrigin(0.0, 0.0, -5.0); //to scale moon should be 30x earth diameter
 		//TODO set rotation speed relative to earth
 		moonOrbitNode.updateSelf = function(dt, sceneNode)
 		{
-			sceneNode.rotate(0.0, -108 * dt, 0.0);
+			sceneNode.rotate(0.0, -108.0 * dt, 0.0); //-108
 		}
 		
 		var moonNode = scene.createNode();
@@ -93,8 +93,7 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 			//camera.setTarget(sceneNode.getWorldPosition());
 		}
 
-		var light = scene.addLight();
-		light.createShadowMapTexture(gl, 512, 512);		
+		var light = scene.addLight(gl, true);			
 		var lightNode = scene.createNode();
 		lightNode.setPosition(5.0, 0.0, -1.0);
 		lightNode.attachLight(light);
@@ -109,12 +108,12 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		var cubeMesh = meshResource.getPlane(gl, 1.0, 1.0);
 		cubeMesh.setShader(shaderResource.getShaderProgram(gl, ShaderName.FLAT));
 		var cubeNode = scene.createNode();
-		cubeNode.setPosition(-0.55, -0.55, -3.0);
+		cubeNode.setOrigin(0.55, -1.0, 3.0);
 		cubeNode.attachMesh(cubeMesh);
 		cubeNode.setTexture(TextureType.DIFFUSE, light.getShadowMapTexture());
 		//cubeNode.rotate(-90.0, 0.0, 0.0);
 		//cubeNode.move(0.0, 17.0, -0.2);
-		scene.addChild(cubeNode);
+		camNode.addChild(cubeNode);
 
 	}
 	

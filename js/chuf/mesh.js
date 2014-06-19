@@ -452,9 +452,9 @@ function MeshResource()
 				{
 					gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
 					gl.vertexAttribPointer(shadowMapShader.getAttribute(ShaderAttribute.POSITION), 3, gl.FLOAT, false, 20, 0);
-					shadowMapShader.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
+					shadowMapShader.setUniformMat4(ShaderUniform.MMAT, matrices.mMatrix);
 					shadowMapShader.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
-					shadowMapShader.setUniformMat4(ShaderUniform.CMAT, matrices.camMatrix);
+					shadowMapShader.setUniformMat4(ShaderUniform.VMAT, matrices.vMatrix);
 					shadowMapShader.bind();			
 
 					gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -477,6 +477,9 @@ function MeshResource()
 					shaderProgram.setUniformVec3(ShaderUniform.LIGHT_SPEC, lights[0].specular);
 					shaderProgram.setUniformVec3(ShaderUniform.LIGHT_DIFF, lights[0].diffuse);
 					shaderProgram.setUniformVec3(ShaderUniform.LIGHT_AMB, lights[0].ambient);
+					//set shadowmap, and light v uniform
+					shaderProgram.setUniformMat4(ShaderUniform.LIGHTVMAT, lights[0].getViewMatrix());
+					shaderProgram.setUniformTexture(ShaderUniform.SHADOWMAP, lights[0].getShadowMapTexture());
 
 					if(shaderProgram.shaderName === ShaderName.NORMALMAP)
 					{
@@ -484,8 +487,6 @@ function MeshResource()
 						gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.TANGENT), normalBuffer.itemSize, gl.FLOAT, false, 36, 12);
 						gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.BITANGENT), normalBuffer.itemSize, gl.FLOAT, false, 36, 24);
 					}
-
-					//TODO set shadowmap, light projection and light mv uniform
 				}			
 
 				//set shader uniforms
@@ -508,13 +509,13 @@ function MeshResource()
 					shaderProgram.setUniformTexture(ShaderUniform.SKYBOXMAP, skyboxTexture);
 				}
 
-				shaderProgram.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
+				shaderProgram.setUniformMat4(ShaderUniform.MMAT, matrices.mMatrix);
 				shaderProgram.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
 				
 				if(shaderProgram.shaderName != ShaderName.SKYBOX)
 				{
-					shaderProgram.setUniformMat4(ShaderUniform.CMAT, matrices.camMatrix);
-					mat4.toInverseMat3(matrices.mvMatrix, nMatrix);
+					shaderProgram.setUniformMat4(ShaderUniform.VMAT, matrices.vMatrix);
+					mat4.toInverseMat3(matrices.mMatrix, nMatrix);
 					mat3.transpose(nMatrix);
 					shaderProgram.setUniformMat3(ShaderUniform.NMAT, nMatrix);
 				}
@@ -529,8 +530,8 @@ function MeshResource()
 				if(drawNormals && debugShader)
 				{
 					debugShader.bind();
-					debugShader.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
-					debugShader.setUniformMat4(ShaderUniform.CMAT, matrices.camMatrix);
+					debugShader.setUniformMat4(ShaderUniform.MMAT, matrices.mMatrix);
+					debugShader.setUniformMat4(ShaderUniform.VMAT, matrices.vMatrix);
 					debugShader.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
 
 					gl.bindBuffer(gl.ARRAY_BUFFER, debugBuffer);

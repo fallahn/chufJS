@@ -9,9 +9,11 @@ precision mediump float;
 varying vec2 vTexCoord;
 varying vec3 vNormal;
 varying vec4 vPosition;
+varying vec4 vShadowPosition;
 
 uniform sampler2D uColourMap;
 uniform sampler2D uSpecularMap;
+uniform sampler2D uShadowMap;
 
 uniform vec3 uLightPosition;
 uniform vec3 uAmbientColour;

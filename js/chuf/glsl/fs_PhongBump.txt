@@ -9,14 +9,51 @@ precision mediump float;
 varying vec2 vTexCoord;
 varying vec3 vLightVec;
 varying vec3 vEyeVec;
+varying vec4 vShadowPosition;
 
 uniform sampler2D uColourMap;
 uniform sampler2D uSpecularMap;
 uniform sampler2D uNormalMap;
+uniform sampler2D uShadowMap;
+
 uniform vec3 uSpecularColour;
 uniform vec3 uDiffuseColour;
 uniform vec3 uAmbientColour;
 
+//------------TODO move these to include file---------------
+highp float unpack(const in highp vec4 rgbaDepth)
+{
+	const highp vec4 bitShift = vec4(1.0 / 16777216.0,
+									1.0 / 65536.0,
+									1.0 / 256.0,
+									1.0);
+	return dot(rgbaDepth, bitShift);
+
+}
+
+const highp float shadowBias = 0.00000001;
+float getVisibility(vec4 shadowMapPosition)
+{
+	highp vec3 shadowCoord = shadowMapPosition.xyz / shadowMapPosition.w;
+	
+	if(shadowCoord.x >= 0.0 &&
+		shadowCoord.x <= 1.0 &&
+		shadowCoord.y >= 0.0 &&
+		shadowCoord.y <= 1.0)
+	{
+		highp vec4 packedDepth = texture2D(uShadowMap, shadowCoord.xy);
+		//bool maxDepth = (dot(packedDepth, vec4(1.0)) == 4.0);
+		if(shadowMapPosition.w > 0.1)
+		{
+			highp float shadowDepth = unpack(packedDepth);
+			if(shadowCoord.z  > (shadowDepth - shadowBias))
+				return 0.1;
+		}
+		return 1.0;
+	}
+	return 1.0;
+}
+//-----------------------------------------------------------
 void main(void)
 {
 	vec4 baseColour = texture2D(uColourMap, vTexCoord.xy);
@@ -35,5 +72,5 @@ void main(void)
 	}
 
 	vec3 finalColour = uAmbientColour + (baseColour.rgb * diffuseAmount) + (uSpecularColour * specAmount);
-	gl_FragColor = vec4(finalColour, baseColour.a);
+	gl_FragColor = vec4(finalColour, baseColour.a) * getVisibility(vShadowPosition);
 }

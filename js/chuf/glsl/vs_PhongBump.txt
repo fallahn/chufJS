@@ -12,12 +12,12 @@ attribute vec3 aNormal;
 attribute vec3 aTan;
 attribute vec3 aBitan;
 
-uniform mat4 uMVMat;
+uniform mat4 uMMat;
 uniform mat4 uPMat;
-uniform mat4 uCMat; //camera transform
+uniform mat4 uVMat; //camera transform
 uniform mat3 uNMat;
 uniform mat4 uBiasMat;
-uniform mat4 uLightMVMat;
+uniform mat4 uLightVMat;
 uniform vec3 uLightPosition;
 
 varying vec3 vLightVec;
@@ -27,25 +27,19 @@ varying vec4 vShadowPosition;
 
 void main(void)
 {
-	vec4 viewVert = uCMat * uMVMat * vec4(aPosition, 1.0);
-	//vec4 lightPos = uCMat * uLightMat * vec4(uLightPosition, 1.0);
+	vShadowPosition =  uBiasMat * uPMat * uLightVMat * uMMat * vec4(aPosition, 1.0);	
+	vec4 viewVert = uVMat * uMMat * vec4(aPosition, 1.0);
 	gl_Position = uPMat * viewVert;
 	vTexCoord = aTexCoord;
 
 	vec3 n = normalize(uNMat * aNormal);
 	vec3 t = normalize(uNMat * aTan);
 	vec3 b = normalize(uNMat * aBitan);
+	mat3 tbn = mat3(t, b, n);
 
 	vec3 temp = uLightPosition - viewVert.xyz;
-	vLightVec.x = dot(temp, t);
-	vLightVec.y = dot(temp, b);
-	vLightVec.z = dot(temp, n);
+	vLightVec = temp * tbn;
 
 	temp = -viewVert.xyz;
-	vEyeVec.x = dot(temp, t);
-	vEyeVec.y = dot(temp, b);
-	vEyeVec.z = dot(temp, n);
-
-	//TODO would dividing the shadowCoord be better here done once per vert
-	//rather than once per frag?
+	vEyeVec = temp * tbn;
 }

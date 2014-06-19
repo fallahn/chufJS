@@ -71,8 +71,8 @@ function Light()
 	}
 
 	var pMat = mat4.create();
-	mat4.perspective(45.0, 1.0, 0.1, 100.0, pMat);
-	this.getProjection = function()
+	//mat4.perspective(90.0, 1.0, 0.1, 100.0, pMat);
+	this.getProjectionMatrix = function()
 	{
 		//projection matrix for shadow map shader
 		return pMat;
@@ -84,9 +84,10 @@ function Light()
 		target = targetPoint;
 	}
 
-	this.getModelView = function()
+	this.getViewMatrix = function()
 	{
 		mat4.identity(inverseMVMatrix);
+		//TODO only rebuild this if light properties updated
 		return mat4.lookAt(this.getPosition(), target, [0.0, 1.0, 0.0], inverseMVMatrix);
 	}
 
@@ -94,6 +95,7 @@ function Light()
 	this.createShadowMapTexture = function(gl, width, height)
 	{
 		shadowMapTexture = new RenderTexture(gl, width, height, true, TargetType.TEXTURE_2D);
+		mat4.perspective(45.0, width / height, 0.1, 100.0, pMat);
 	}
 	this.getShadowMapTexture = function()
 	{
