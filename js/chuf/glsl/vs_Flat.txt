@@ -8,14 +8,13 @@
 attribute vec3 aPosition;
 attribute vec2 aTexCoord;
 
-uniform mat4 uMMat;
-uniform mat4 uVMat;
+uniform mat4 uMVMat;
 uniform mat4 uPMat;
 
 varying vec2 vTexCoord;
 
 void main(void)
 {
-	gl_Position = uPMat *uVMat * uMMat * vec4(aPosition, 1.0);
+	gl_Position = uPMat * uMVMat * vec4(aPosition, 1.0);
 	vTexCoord = aTexCoord;
 }

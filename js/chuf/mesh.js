@@ -452,9 +452,8 @@ function MeshResource()
 				{
 					gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
 					gl.vertexAttribPointer(shadowMapShader.getAttribute(ShaderAttribute.POSITION), 3, gl.FLOAT, false, 20, 0);
-					shadowMapShader.setUniformMat4(ShaderUniform.MMAT, matrices.mMatrix);
+					shadowMapShader.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
 					shadowMapShader.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
-					shadowMapShader.setUniformMat4(ShaderUniform.VMAT, matrices.vMatrix);
 					shadowMapShader.bind();			
 
 					gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -512,13 +511,14 @@ function MeshResource()
 				shaderProgram.setUniformMat4(ShaderUniform.MMAT, matrices.mMatrix);
 				shaderProgram.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
 				
-				if(shaderProgram.shaderName != ShaderName.SKYBOX)
+				if(shaderProgram.shaderName !== ShaderName.SKYBOX)
 				{
-					shaderProgram.setUniformMat4(ShaderUniform.VMAT, matrices.vMatrix);
+					shaderProgram.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
 					mat4.toInverseMat3(matrices.mMatrix, nMatrix);
 					mat3.transpose(nMatrix);
 					shaderProgram.setUniformMat3(ShaderUniform.NMAT, nMatrix);
 				}
+				
 
 				//bind element buffer and draw
 				shaderProgram.bind();			
@@ -530,8 +530,7 @@ function MeshResource()
 				if(drawNormals && debugShader)
 				{
 					debugShader.bind();
-					debugShader.setUniformMat4(ShaderUniform.MMAT, matrices.mMatrix);
-					debugShader.setUniformMat4(ShaderUniform.VMAT, matrices.vMatrix);
+					debugShader.setUniformMat4(ShaderUniform.MVMAT, matrices.mvMatrix);
 					debugShader.setUniformMat4(ShaderUniform.PMAT, matrices.pMatrix);
 
 					gl.bindBuffer(gl.ARRAY_BUFFER, debugBuffer);
@@ -604,8 +603,8 @@ function MeshResource()
 	//----sphere mesh type----//
 	function sphere(radius)
 	{
-		var bandCount = 14; //these only work if they are both the same
-		var stripCount = 14;
+		var bandCount = 24; //these only work if they are both the same
+		var stripCount = 24;
 
 		var vertexData = new VertexData();
 		var vertPosData = vertexData.positions;

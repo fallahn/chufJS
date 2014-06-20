@@ -11,6 +11,7 @@ attribute vec3 aNormal;
 
 uniform mat4 uMMat;
 uniform mat4 uVMat;
+uniform mat4 uMVMat;
 uniform mat4 uPMat;
 uniform mat3 uNMat;
 uniform mat4 uBiasMat;
@@ -23,7 +24,8 @@ varying vec4 vShadowPosition;
 
 void main(void)
 {
-	vPosition = uVMat * uMMat * vec4(aPosition, 1.0);
+	vShadowPosition =  uBiasMat * uPMat * uLightVMat * uMMat * vec4(aPosition, 1.0);
+	vPosition = uMVMat * vec4(aPosition, 1.0);
 	gl_Position = uPMat * vPosition;
 	vTexCoord = aTexCoord;
 	vNormal = uNMat * aNormal;

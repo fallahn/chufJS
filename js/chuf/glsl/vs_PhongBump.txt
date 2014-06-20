@@ -14,7 +14,8 @@ attribute vec3 aBitan;
 
 uniform mat4 uMMat;
 uniform mat4 uPMat;
-uniform mat4 uVMat; //camera transform
+uniform mat4 uVMat;
+uniform mat4 uMVMat;
 uniform mat3 uNMat;
 uniform mat4 uBiasMat;
 uniform mat4 uLightVMat;
@@ -28,7 +29,7 @@ varying vec4 vShadowPosition;
 void main(void)
 {
 	vShadowPosition =  uBiasMat * uPMat * uLightVMat * uMMat * vec4(aPosition, 1.0);	
-	vec4 viewVert = uVMat * uMMat * vec4(aPosition, 1.0);
+	vec4 viewVert = uMVMat * vec4(aPosition, 1.0);
 	gl_Position = uPMat * viewVert;
 	vTexCoord = aTexCoord;
 

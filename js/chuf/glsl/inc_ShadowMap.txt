@@ -1,0 +1,35 @@
+uniform sampler2D uShadowMap;
+
+highp float unpack(const in highp vec4 rgbaDepth)
+{
+	const highp vec4 bitShift = vec4(1.0 / 16777216.0,
+									1.0 / 65536.0,
+									1.0 / 256.0,
+									1.0);
+	return dot(rgbaDepth, bitShift);
+
+}
+
+
+float getVisibility(vec4 shadowMapPosition, highp float shadowBias)
+{
+	highp vec3 shadowCoord = shadowMapPosition.xyz / shadowMapPosition.w;
+	shadowBias = clamp(shadowBias, 0.0, 1.0);
+	
+	if(shadowCoord.x >= 0.0 &&
+		shadowCoord.x <= 1.0 &&
+		shadowCoord.y >= 0.0 &&
+		shadowCoord.y <= 1.0)
+	{
+		highp vec4 packedDepth = texture2D(uShadowMap, shadowCoord.xy);
+		
+		if(shadowMapPosition.w > 0.1)
+		{
+			highp float shadowDepth = unpack(packedDepth);
+			if(shadowCoord.z  > (shadowDepth - shadowBias))
+				return 0.25;
+		}
+		return 1.0;
+	}
+	return 1.0;
+}

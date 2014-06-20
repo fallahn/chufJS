@@ -34,20 +34,21 @@ var ShaderUniform = Object.freeze
 	PMAT        : 0,
 	MMAT        : 1,
 	VMAT        : 2,
-	NMAT        : 3,
-	BIASMAT     : 4,
-	LIGHTVMAT  : 5,
+	MVMAT      	: 3,
+	NMAT        : 4,
+	BIASMAT     : 5,
+	LIGHTVMAT   : 6,
 	//maps
-	COLOURMAP   : 6,
-	NORMALMAP   : 7,
-	SPECULARMAP : 8,
-	SKYBOXMAP   : 9,
-	SHADOWMAP   : 10,
+	COLOURMAP   : 7,
+	NORMALMAP   : 8,
+	SPECULARMAP : 9,
+	SKYBOXMAP   : 10,
+	SHADOWMAP   : 11,
 	//lighting
-	LIGHT_POS	: 11,
-	LIGHT_SPEC  : 12,
-	LIGHT_DIFF  : 13,
-	LIGHT_AMB   : 14
+	LIGHT_POS	: 12,
+	LIGHT_SPEC  : 13,
+	LIGHT_DIFF  : 14,
+	LIGHT_AMB   : 15
 });
 
 function ShaderResource()
@@ -86,28 +87,28 @@ function ShaderResource()
 		switch (shaderName)
 		{
 		case ShaderName.PHONG:
-			fragShader = getShader(gl, readFile("/js/chuf/glsl/fs_Phong.txt"), ShaderType.FRAGMENT);
-			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_Phong.txt"), ShaderType.VERTEX);
+			fragShader = getShader(gl, loadFromFile("/js/chuf/glsl/fs_Phong.txt"), ShaderType.FRAGMENT);
+			vertShader = getShader(gl, loadFromFile("/js/chuf/glsl/vs_Phong.txt"), ShaderType.VERTEX);
 		break;
 		case ShaderName.NORMALMAP:
-			fragShader = getShader(gl, readFile("/js/chuf/glsl/fs_PhongBump.txt"), ShaderType.FRAGMENT);
-			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_PhongBump.txt"), ShaderType.VERTEX);
+			fragShader = getShader(gl, loadFromFile("/js/chuf/glsl/fs_PhongBump.txt"), ShaderType.FRAGMENT);
+			vertShader = getShader(gl, loadFromFile("/js/chuf/glsl/vs_PhongBump.txt"), ShaderType.VERTEX);
 		break;
 		case ShaderName.DEBUG:
-			fragShader = getShader(gl, readFile("/js/chuf/glsl/fs_Debug.txt"), ShaderType.FRAGMENT);
-			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_Debug.txt"), ShaderType.VERTEX);
+			fragShader = getShader(gl, loadFromFile("/js/chuf/glsl/fs_Debug.txt"), ShaderType.FRAGMENT);
+			vertShader = getShader(gl, loadFromFile("/js/chuf/glsl/vs_Debug.txt"), ShaderType.VERTEX);
 		break;
 		case ShaderName.SKYBOX:
-			fragShader = getShader(gl, readFile("/js/chuf/glsl/fs_SkyBox.txt"), ShaderType.FRAGMENT);
-			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_CubeMap.txt"), ShaderType.VERTEX);
+			fragShader = getShader(gl, loadFromFile("/js/chuf/glsl/fs_SkyBox.txt"), ShaderType.FRAGMENT);
+			vertShader = getShader(gl, loadFromFile("/js/chuf/glsl/vs_CubeMap.txt"), ShaderType.VERTEX);
 		break;
 		case ShaderName.SHADOWMAP:
-			fragShader = getShader(gl, readFile("/js/chuf/glsl/fs_ShadowMap.txt"), ShaderType.FRAGMENT);
-			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_ShadowMap.txt"), ShaderType.VERTEX);
+			fragShader = getShader(gl, loadFromFile("/js/chuf/glsl/fs_ShadowMap.txt"), ShaderType.FRAGMENT);
+			vertShader = getShader(gl, loadFromFile("/js/chuf/glsl/vs_ShadowMap.txt"), ShaderType.VERTEX);
 		break;
 		case ShaderName.FLAT:
-			fragShader = getShader(gl, readFile("/js/chuf/glsl/fs_Flat.txt"), ShaderType.FRAGMENT);
-			vertShader = getShader(gl, readFile("/js/chuf/glsl/vs_Flat.txt"), ShaderType.VERTEX);
+			fragShader = getShader(gl, loadFromFile("/js/chuf/glsl/fs_Flat.txt"), ShaderType.FRAGMENT);
+			vertShader = getShader(gl, loadFromFile("/js/chuf/glsl/vs_Flat.txt"), ShaderType.VERTEX);
 		break;
 		default:
 		//TODO allow for custom shaders
@@ -170,7 +171,30 @@ function ShaderResource()
 
 			return shader;
 		}
-		//use ajax to read shader files from server
+		
+		 //parses any include in shader files - currently
+		 //only works to one level ie doesn't parse includes
+		 //in included files
+		function loadFromFile(file)
+		{
+			var stringData = readFile(file);
+			var splitData = stringData.split('\n');
+
+			for(var l = 0; l < splitData.length; ++l)
+			{
+				if(splitData[l].substring(0, 8) === "#include")
+				{
+					var subdata = splitData[l].split(' ');
+					var pathData = file.split('/');
+					pathData[pathData.length - 1] = subdata[subdata.length - 1];
+					splitData[l] = readFile(pathData.join('/'));
+				}
+			}
+
+			stringData = splitData.join('\n');
+			return stringData;
+		}
+
 		function readFile(file)
 		{
 			//NOTE this probably requires the use of .txt as shader source
@@ -182,8 +206,6 @@ function ShaderResource()
 
 		    if (rq.status >= 200 && rq.status < 400)
 		    {
-		        //TODO file parsing for complex shaders
-		        //such as those with pragma directives
 		        return rq.responseText;
 		    }
 		    else
@@ -256,11 +278,12 @@ function ShaderResource()
 		}
 
 		var pMatUniformLocation        = null;
+		var mMatUniformLocation        = null;
 		var mvMatUniformLocation       = null;
 		var cMatUniformLocation        = null;
 		var nMatUniformLocation        = null;
 		var biasMatUniformLocation     = null;
-		var lightVMatUniformLocation  = null;
+		var lightVMatUniformLocation   = null;
 		var colourmapUniformLocation   = null;
 		var normalmapUniformLocation   = null;
 		var specularmapUniformLocation = null;
@@ -283,13 +306,17 @@ function ShaderResource()
 					pMatUniformLocation = gl.getUniformLocation(program, "uPMat");
 			return pMatUniformLocation;
 			case ShaderUniform.MMAT:
-				if(mvMatUniformLocation == null)
-					mvMatUniformLocation = gl.getUniformLocation(program, "uMMat");
-			return mvMatUniformLocation;
+				if(mMatUniformLocation == null)
+					mMatUniformLocation = gl.getUniformLocation(program, "uMMat");
+			return mMatUniformLocation;
 			case ShaderUniform.VMAT:
 				if(cMatUniformLocation == null)
 					cMatUniformLocation = gl.getUniformLocation(program, "uVMat");
 			return cMatUniformLocation;
+			case ShaderUniform.MVMAT:
+				if(mvMatUniformLocation == null)
+					mvMatUniformLocation = gl.getUniformLocation(program, "uMVMat");
+			return mvMatUniformLocation;
 			case ShaderUniform.NMAT:
 				if(nMatUniformLocation == null)
 					nMatUniformLocation = gl.getUniformLocation(program, "uNMat");

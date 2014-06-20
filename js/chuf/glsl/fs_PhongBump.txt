@@ -14,63 +14,35 @@ varying vec4 vShadowPosition;
 uniform sampler2D uColourMap;
 uniform sampler2D uSpecularMap;
 uniform sampler2D uNormalMap;
-uniform sampler2D uShadowMap;
 
 uniform vec3 uSpecularColour;
 uniform vec3 uDiffuseColour;
 uniform vec3 uAmbientColour;
 
-//------------TODO move these to include file---------------
-highp float unpack(const in highp vec4 rgbaDepth)
-{
-	const highp vec4 bitShift = vec4(1.0 / 16777216.0,
-									1.0 / 65536.0,
-									1.0 / 256.0,
-									1.0);
-	return dot(rgbaDepth, bitShift);
+#include inc_ShadowMap.txt
 
-}
-
-const highp float shadowBias = 0.00000001;
-float getVisibility(vec4 shadowMapPosition)
-{
-	highp vec3 shadowCoord = shadowMapPosition.xyz / shadowMapPosition.w;
-	
-	if(shadowCoord.x >= 0.0 &&
-		shadowCoord.x <= 1.0 &&
-		shadowCoord.y >= 0.0 &&
-		shadowCoord.y <= 1.0)
-	{
-		highp vec4 packedDepth = texture2D(uShadowMap, shadowCoord.xy);
-		//bool maxDepth = (dot(packedDepth, vec4(1.0)) == 4.0);
-		if(shadowMapPosition.w > 0.1)
-		{
-			highp float shadowDepth = unpack(packedDepth);
-			if(shadowCoord.z  > (shadowDepth - shadowBias))
-				return 0.1;
-		}
-		return 1.0;
-	}
-	return 1.0;
-}
-//-----------------------------------------------------------
 void main(void)
 {
 	vec4 baseColour = texture2D(uColourMap, vTexCoord.xy);
-	vec3 bump = normalize(texture2D(uNormalMap, vTexCoord.xy).xyz * 2.0 - 1.0);
+	vec3 normal = normalize(texture2D(uNormalMap, vTexCoord.xy).xyz * 2.0 - 1.0);
 
 	vec3 lightDir = normalize(vLightVec);
 	vec3 eyeDir = normalize(vEyeVec);
-	vec3 reflectDir = reflect(-lightDir, bump);
+	vec3 reflectDir = reflect(-lightDir, normal);
 
 	float specAmount = 0.0;
-	float diffuseAmount = max(dot(bump, lightDir), 0.0);
+	float diffuseAmount = max(dot(normal, lightDir), 0.0);
 	if(diffuseAmount > 0.0)
 	{
 		vec4 specSample = texture2D(uSpecularMap, vTexCoord.xy);
 		specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), specSample.g * 255.0) * specSample.r;
 	}
 
+	highp float bias = 0.000000001 * tan(acos(diffuseAmount));
+	float visibility = getVisibility(vShadowPosition, bias);
+	diffuseAmount *= visibility;
+	specAmount = (visibility < 1.0) ? 0.0 : specAmount;
+
 	vec3 finalColour = uAmbientColour + (baseColour.rgb * diffuseAmount) + (uSpecularColour * specAmount);
-	gl_FragColor = vec4(finalColour, baseColour.a) * getVisibility(vShadowPosition);
+	gl_FragColor =  vec4(finalColour, baseColour.a);
 }

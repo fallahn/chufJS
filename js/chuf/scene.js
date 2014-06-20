@@ -20,7 +20,7 @@ function Scene()
 		if(lights.length < maxLights)
 		{
 			var light = new Light();
-			if(castShadows) light.createShadowMapTexture(gl, 1024, 1024);	
+			if(castShadows) light.createShadowMapTexture(gl, 512, 512);	
 			lights.push(light);
 			return light;
 		}
@@ -41,9 +41,10 @@ function Scene()
 	//root node of the scene, main draw calls passed down to children
 	var rootMatrices =
 	{
-		pMatrix : mat4.create(),
-		mMatrix : mat4.create(),
-		vMatrix : mat4.create()
+		pMatrix  : mat4.create(),
+		mMatrix  : mat4.create(),
+		vMatrix  : mat4.create(),
+		mvMatrix : mat4.create()
 	}
 	
 	var rootChildren = [];
@@ -97,20 +98,14 @@ function Scene()
 		
 		gl.enable(gl.CULL_FACE);		
 		gl.cullFace(gl.FRONT);				
-		/*
-		var colours = [
-				0.0, 1.0, 0.0, 1.0,
-				1.0, 0.0, 0.0, 1.0,
-				0.0, 0.0, 1.0, 1.0,
-				1.0, 1.0, 0.0, 1.0,
-				0.0, 1.0, 1.0, 1.0,
-				1.0, 0.0, 1.0, 1.0];
-		*/
 
 		//---------shadow pass-----------
 		shadowMapTarget = lights[0].getShadowMapTexture();
 		if(shadowMapTarget)
 		{
+			//gl.enable(gl.POLYGON_OFFSET_FILL);
+			//gl.polygonOffset(2.0, 4.0);
+
 			gl.viewport(0, 0, shadowMapTarget.width, shadowMapTarget.height);
 			rootMatrices.pMatrix = lights[0].getProjectionMatrix();
 			shadowMapTarget.setActive(true);
@@ -127,6 +122,7 @@ function Scene()
 			}
 
 			shadowMapTarget.setActive(false);
+			//gl.disable(gl.POLYGON_OFFSET_FILL);
 		}
 
 		//----------final pass-----------
@@ -173,9 +169,6 @@ function Scene()
 			lights.pop();
 		}
 		UID = 0;
-
-		//if(shadowMapTarget)
-		//	shadowMapTarget.delete(); //performed by light deletion
 	}
 
 
@@ -356,6 +349,7 @@ function Scene()
 		{
 			mat4.multiply(matrices.mMatrix, mMatrix);
 			mat4.set(matrices.mMatrix, worldMatrix);
+
 			
 			if(mesh)
 			{
@@ -372,6 +366,8 @@ function Scene()
 				{
 					mesh.setTexture(TextureType.SPECULAR, specularTexture);
 				}
+				//premultiply model/view matrices
+				mat4.multiply(matrices.vMatrix, matrices.mMatrix, matrices.mvMatrix);
 				mesh.draw(matrices, renderPass);
 			}
 

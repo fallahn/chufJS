@@ -13,14 +13,13 @@ varying vec4 vShadowPosition;
 
 uniform sampler2D uColourMap;
 uniform sampler2D uSpecularMap;
-uniform sampler2D uShadowMap;
 
 uniform vec3 uLightPosition;
 uniform vec3 uAmbientColour;
 uniform vec3 uDiffuseColour;
 uniform vec3 uSpecularColour;
 
-//float shininess = 128.0; //0 - 255
+#include inc_ShadowMap.txt
 
 void main(void)
 {
@@ -36,6 +35,11 @@ void main(void)
 		vec4 specSample = texture2D(uSpecularMap, vTexCoord.xy);
 		specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), specSample.g * 255.0) * specSample.r;
 	}
+
+	highp float bias = 0.000000001 * tan(acos(diffuseAmount));
+	float visibility = getVisibility(vShadowPosition, bias);
+	diffuseAmount *= visibility;
+	specAmount = (visibility < 1.0) ? 0.0 : specAmount;
 
 	vec4 diffuseColour = texture2D(uColourMap, vTexCoord.xy);
 	vec3 finalColour = uAmbientColour + (diffuseColour.rgb * diffuseAmount) + (uSpecularColour * specAmount);

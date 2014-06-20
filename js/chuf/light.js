@@ -25,16 +25,12 @@ function Light()
 	}
 
 	var inverseMVMatrix = mat4.create();
+	mat4.identity(inverseMVMatrix);	
 	this.getTransform = function()
 	{
-		//inverse parent transform for shadow map shader mvMat
 		if(parent)
 		{		
 			mat4.inverse(parent.getWorldTransform(), inverseMVMatrix);
-		}
-		else
-		{
-			mat4.identity(inverseMVMatrix);
 		}
 		return inverseMVMatrix;		
 	}
@@ -71,24 +67,24 @@ function Light()
 	}
 
 	var pMat = mat4.create();
-	//mat4.perspective(90.0, 1.0, 0.1, 100.0, pMat);
 	this.getProjectionMatrix = function()
 	{
 		//projection matrix for shadow map shader
 		return pMat;
 	}
 
+	var viewMat = mat4.create();
+	mat4.identity(viewMat);
 	var target = vec3.create();
 	this.setTarget = function(targetPoint)
 	{
 		target = targetPoint;
+		mat4.lookAt(this.getPosition(), target, [0.0, 1.0, 0.0], viewMat);
 	}
 
 	this.getViewMatrix = function()
 	{
-		mat4.identity(inverseMVMatrix);
-		//TODO only rebuild this if light properties updated
-		return mat4.lookAt(this.getPosition(), target, [0.0, 1.0, 0.0], inverseMVMatrix);
+		return viewMat;
 	}
 
 	var shadowMapTexture = null;
