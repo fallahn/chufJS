@@ -92,6 +92,7 @@ function Light()
 	{
 		shadowMapTexture = new RenderTexture(gl, width, height, true, TargetType.TEXTURE_2D);
 		mat4.perspective(45.0, width / height, 0.1, 100.0, pMat);
+		//mat4.ortho(-5.0, 5.0, -5.0, 5.0, 0.1, 100.0, pMat);
 	}
 	this.getShadowMapTexture = function()
 	{

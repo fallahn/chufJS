@@ -16,13 +16,14 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		var light = scene.addLight(gl, true);			
 		var lightNode = scene.createNode();
 		lightNode.attachLight(light);
+		lightNode.setPosition(0.0, 1.0, 2.0);
 
 		var globeOrbitNode = scene.createNode();
-		globeOrbitNode.setOrigin(0.0, 0.0, 20.0);
+		globeOrbitNode.setOrigin(0.0, 0.0, 15.0);
 		globeOrbitNode.updateSelf = function(dt, sceneNode)
 		{
-			sceneNode.rotate(0.0, 10.0 * dt, 0.0);
-			//TODO calc current rotation scale
+			sceneNode.rotate(0.0, 0.9863 * dt, 0.0);
+			//current rotation scale 0.9863 = 0.3068
 		}
 
 		var globeMesh = meshResource.getSphere(gl, 1.0);
@@ -35,7 +36,7 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		//globeNode.setPosition(0.0, 0.0, -6.0);
 		globeNode.updateSelf = function(dt, sceneNode)
 		{
-			//sceneNode.rotate(0.0, 112 * dt, 0.0);
+			sceneNode.rotate(0.0, 112 * dt, 0.0);
 		}
 		globeNode.setTexture(TextureType.DIFFUSE, textureResource.getTexture(gl, "img/earth_map/earth_colour.png"));
 		globeNode.setTexture(TextureType.SPECULAR, textureResource.getTexture(gl, "img/earth_map/earth_specular.png"));
@@ -43,10 +44,10 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 		
 		//use this to orbit globe, and attach moon node to it
 		var moonOrbitNode = scene.createNode();
-		moonOrbitNode.setOrigin(0.0, 0.0, -2.0); //to scale moon distance should be 30x earth diameter
+		moonOrbitNode.setOrigin(0.0, 0.0, -10.0); //to scale moon distance should be 30x earth diameter
 		moonOrbitNode.updateSelf = function(dt, sceneNode)
 		{
-			//sceneNode.rotate(0.0, -108.0 * dt, 0.0); //-108
+			sceneNode.rotate(0.0, -108.0 * dt, 0.0); //-108
 		}
 		
 		var moonNode = scene.createNode();
@@ -90,13 +91,15 @@ function createExampleState(gl, shaderResource, meshResource, textureResource)
 
 		var camNode = scene.createNode();
 		camNode.attachCamera(camera);
-		camNode.setOrigin(0.0, 0.0, -16.0);
+		camNode.setOrigin(-5.0, 0.0, -6.0);
+		//camNode.move(0.0, 1.0, 0.0);
+		//camNode.rotate(-90.0, 0.0, 0.0);
 		
 		camNode.updateSelf = function(dt, sceneNode)
 		{
 			camera.setTarget(globeNode.getWorldPosition());
 		}
-		globeNode.addChild(camNode);
+		globeOrbitNode.addChild(camNode);
 
 /*
 		var cubeMesh = meshResource.getPlane(gl, 1.0, 1.0);

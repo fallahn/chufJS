@@ -20,7 +20,7 @@ function Scene()
 		if(lights.length < maxLights)
 		{
 			var light = new Light();
-			if(castShadows) light.createShadowMapTexture(gl, 512, 512);	
+			if(castShadows) light.createShadowMapTexture(gl, 1024, 1024);	
 			lights.push(light);
 			return light;
 		}
@@ -371,8 +371,12 @@ function Scene()
 				mesh.draw(matrices, renderPass);
 			}
 
+			//copy the model matrix else siblings will modify each other
 			for(var l = 0; l < children.length; ++l)
+			{
+				mat4.set(worldMatrix, matrices.mMatrix);
 				children[l].draw(matrices, renderPass);
+			}
 		}
 
 		var isDeleted = false;

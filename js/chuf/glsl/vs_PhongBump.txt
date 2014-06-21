@@ -14,7 +14,6 @@ attribute vec3 aBitan;
 
 uniform mat4 uMMat;
 uniform mat4 uPMat;
-uniform mat4 uVMat;
 uniform mat4 uMVMat;
 uniform mat3 uNMat;
 uniform mat4 uBiasMat;
@@ -38,7 +37,7 @@ void main(void)
 	vec3 b = normalize(uNMat * aBitan);
 	mat3 tbn = mat3(t, b, n);
 
-	vec3 temp = uLightPosition - viewVert.xyz;
+	vec3 temp = -(uMMat * vec4(aPosition, 1.0)).xyz;
 	vLightVec = temp * tbn;
 
 	temp = -viewVert.xyz;

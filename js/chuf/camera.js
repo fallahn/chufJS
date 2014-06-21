@@ -30,14 +30,15 @@ function Camera(fov, aspectRatio, nearPlane, farPlane)
 	mat4.identity(viewMat);
 	this.getViewMatrix = function()
 	{
-		return viewMat;	
+		if(parent)
+			mat4.lookAt(parent.getWorldPosition(), lookAtTarget, [0.0, 1.0, 0.0], viewMat);
+		return viewMat;
 	}
 
 	var parent = null;
 	this.setParent = function(sceneNode)
 	{
 		parent = sceneNode;
-		mat4.lookAt(parent.getWorldPosition(), lookAtTarget, [0.0, 1.0, 0.0], viewMat);
 	}
 
 	var lookAtTarget = vec3.create();

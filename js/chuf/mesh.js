@@ -472,6 +472,9 @@ function MeshResource()
 					gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
 					gl.vertexAttribPointer(shaderProgram.getAttribute(ShaderAttribute.NORMAL), normalBuffer.itemSize, gl.FLOAT, false, 36, 0);
 
+					var lightPos = vec3.create();
+					mat4.multiplyVec3(matrices.vMatrix, lights[0].getPosition(), lightPos);
+					//console.log(lightPos[0], lightPos[1], lightPos[2]);
 					shaderProgram.setUniformVec3(ShaderUniform.LIGHT_POS, lights[0].getPosition());
 					shaderProgram.setUniformVec3(ShaderUniform.LIGHT_SPEC, lights[0].specular);
 					shaderProgram.setUniformVec3(ShaderUniform.LIGHT_DIFF, lights[0].diffuse);

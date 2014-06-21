@@ -10,6 +10,7 @@ varying vec2 vTexCoord;
 varying vec3 vNormal;
 varying vec4 vPosition;
 varying vec4 vShadowPosition;
+varying vec3 vLightPosition;
 
 uniform sampler2D uColourMap;
 uniform sampler2D uSpecularMap;
@@ -23,7 +24,7 @@ uniform vec3 uSpecularColour;
 
 void main(void)
 {
-	vec3 lightDir = normalize(uLightPosition - vPosition.xyz);
+	vec3 lightDir = normalize(vLightPosition);//(uLightPosition - vPosition.xyz);
 	vec3 normal = normalize(vNormal);
 	vec3 eyeDir = normalize(-vPosition.xyz);
 	vec3 reflectDir = reflect(-lightDir, normal);
@@ -33,7 +34,7 @@ void main(void)
 	if(diffuseAmount > 0.0)
 	{
 		vec4 specSample = texture2D(uSpecularMap, vTexCoord.xy);
-		specAmount = pow(max(dot(reflectDir, eyeDir), 0.0), specSample.g * 255.0) * specSample.r;
+		specAmount = pow(max(dot(reflectDir, lightDir), 0.0), specSample.g * 255.0) * specSample.r; 
 	}
 
 	highp float bias = 0.000000001 * tan(acos(diffuseAmount));
